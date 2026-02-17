@@ -1,29 +1,72 @@
-# Create T3 App
+# BeamFlow
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+BeamFlow is a multi-tenant payment follow-up automation SaaS built on the T3 stack.
 
-## What's next? How do I make an app with this?
+## Stack
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- Next.js App Router
+- TypeScript + tRPC
+- Better Auth (Google + magic link)
+- PostgreSQL + Drizzle ORM
+- BullMQ + Redis for background jobs
+- Stripe payment adapter (with dev mock fallback)
+- Bird WhatsApp adapter
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Quick Start
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+1. Install dependencies:
 
-## Learn More
+```bash
+bun install
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+2. Configure environment:
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
+cp .env.example .env
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+3. Generate and run migrations:
 
-## How do I deploy this?
+```bash
+bun db:generate
+bun db:migrate
+```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+4. Run web app:
+
+```bash
+bun run dev:web
+```
+
+5. Run worker (separate terminal):
+
+```bash
+bun run dev:worker
+```
+
+## Important Routes
+
+- Auth: `/sign-in`, `/verify`
+- Dashboard: `/{orgSlug}/overview`
+- Public payment page: `/pay/i/{invoiceId}`
+- Webhooks:
+  - `/api/webhooks/payments`
+  - `/api/webhooks/whatsapp`
+  - `/api/webhooks/calls`
+- Hourly scheduler endpoint: `/api/cron/hourly`
+
+## Secrets Strategy
+
+Integration secrets are `.env`-referenced in MVP (`INTEGRATION_SECRET_STRATEGY=env-ref`).
+`integration_settings.secretKeyRef` stores environment variable names, not raw secrets.
+
+## Current Scope
+
+This implementation ships core MVP flows:
+
+- Multi-org auth + org membership RBAC
+- Contacts, plans, invoices, conversations, settings APIs
+- Pay-link flow with Stripe adapter
+- Payment + messaging webhook handlers with idempotency table
+- Reminder/receipt queue scaffolding and worker runtime

@@ -1,0 +1,110 @@
+import { and, eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+
+import { db } from "@/server/db";
+import { contacts, messageLogs, webhookEvents } from "@/server/db/schema";
+import { birdWhatsAppAdapter } from "@/server/adapters/messaging/bird.adapter";
+import { recordInboundMessage } from "@/server/services/conversation.service";
+import { handleDeliveryStatus } from "@/server/services/reminder.service";
+import { isStopKeyword, markContactOptedOut } from "@/server/services/optout.service";
+import { writeAuditLog } from "@/server/services/audit.service";
+
+export async function POST(request: Request) {
+  const rawBody = await request.text();
+  const signature =
+    request.headers.get("x-signature") ??
+    request.headers.get("x-bird-signature") ??
+    "";
+  const orgId = request.headers.get("x-beamflow-org-id");
+
+  if (!orgId) {
+    return NextResponse.json({ error: "Missing org context" }, { status: 400 });
+  }
+
+  const verified = await birdWhatsAppAdapter.verifyWebhook({
+    rawBody,
+    signature,
+    headers: request.headers,
+  });
+
+  if (!verified) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  const parsedEvents = await birdWhatsAppAdapter.parseWebhook({ rawBody });
+
+  for (const event of parsedEvents) {
+    try {
+      await db.insert(webhookEvents).values({
+        provider: "BIRD",
+        providerEventId: event.providerEventId,
+        orgId,
+        signatureVerified: true,
+        status: "RECEIVED",
+        payload: event as unknown as Record<string, unknown>,
+      });
+    } catch {
+      continue;
+    }
+
+    if (event.type === "MESSAGE_STATUS") {
+      await handleDeliveryStatus({
+        orgId,
+        providerMessageId: event.providerMessageId,
+        status: event.status,
+      });
+
+      await db
+        .update(webhookEvents)
+        .set({
+          status: "PROCESSED",
+          processedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(webhookEvents.provider, "BIRD"),
+            eq(webhookEvents.providerEventId, event.providerEventId)
+          )
+        );
+      continue;
+    }
+
+    const inbound = await recordInboundMessage({
+      orgId,
+      fromPhone: event.from,
+      body: event.body,
+      providerMessageId: event.providerMessageId,
+    });
+
+    if (inbound && (await isStopKeyword(event.body))) {
+      await markContactOptedOut({
+        orgId,
+        contactId: inbound.contactId,
+        reason: "STOP",
+      });
+
+      await writeAuditLog({
+        orgId,
+        actorType: "SYSTEM",
+        action: "OPT_OUT_RECEIVED",
+        entityType: "Contact",
+        entityId: inbound.contactId,
+      });
+    }
+
+    await db
+      .update(webhookEvents)
+      .set({
+        status: "PROCESSED",
+        processedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(webhookEvents.provider, "BIRD"),
+          eq(webhookEvents.providerEventId, event.providerEventId)
+        )
+      );
+  }
+
+  return NextResponse.json({ ok: true });
+}

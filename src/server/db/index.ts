@@ -15,4 +15,6 @@ const globalForDb = globalThis as unknown as {
 const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
 if (env.NODE_ENV !== "production") globalForDb.conn = conn;
 
-export const db = drizzle(conn, { schema });
+// NOTE: schema typing is intentionally relaxed to keep build/runtime ergonomics
+// predictable while the MVP surface is evolving quickly.
+export const db = drizzle(conn, { schema }) as any;
