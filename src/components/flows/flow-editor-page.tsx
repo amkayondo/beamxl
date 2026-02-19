@@ -40,7 +40,7 @@ const statusStyles: Record<FlowStatus, string> = {
   PAUSED: "border-amber-500/40 bg-amber-500/20 text-amber-200",
 };
 
-const defaultViewport: Viewport = { x: 0, y: 0, zoom: 0.9 };
+const defaultViewport: Viewport = { x: 320, y: 100, zoom: 0.75 };
 
 export function FlowEditorPage({
   orgSlug,
@@ -63,8 +63,6 @@ export function FlowEditorPage({
   const [isDirty, setIsDirty] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [mobilePaletteOpen, setMobilePaletteOpen] = useState(false);
-  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [testLog, setTestLog] = useState<Array<{ nodeId: string; action: string; detail: string }> | null>(null);
 
   const { data: flowData } = api.flows.byId.useQuery(
@@ -296,188 +294,158 @@ export function FlowEditorPage({
 
   if (!loaded) {
     return (
-      <section className="space-y-3">
-        <h1 className="text-2xl font-semibold">Flow Editor</h1>
-        <p className="text-sm text-muted-foreground">Loading flow...</p>
-      </section>
+      <div className="fixed inset-0 flex items-center justify-center bg-zinc-950">
+        <p className="text-sm text-zinc-400">Loading flow…</p>
+      </div>
     );
   }
 
   return (
-    <section className="space-y-4">
-      <header className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button type="button" variant="outline" onClick={() => router.push(`/${orgSlug}/flows`)}>
-              Back
-            </Button>
-            <Input
-              value={flowName}
-              onChange={(event) => {
-                setFlowName(event.target.value);
-                setIsDirty(true);
-              }}
-              className="h-9 w-64 border-zinc-800 bg-zinc-900 text-zinc-100"
-            />
-            <Badge className={statusStyles[status]}>{status}</Badge>
-            {isDirty ? <Badge className="border-zinc-700 bg-zinc-800 text-zinc-300">Unsaved</Badge> : null}
-          </div>
+    <div className="fixed inset-0 overflow-hidden bg-zinc-950">
+      {/* Full-screen canvas */}
+      <ReactFlowProvider>
+        <FlowCanvas
+          nodes={nodes}
+          edges={edges}
+          viewport={viewport}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onSelectNode={setSelectedNodeId}
+          onDropNode={handleDropNode}
+          onViewportChange={setViewport}
+        />
+      </ReactFlowProvider>
 
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleTestRun}
-              disabled={testRunMutation.isPending}
-            >
-              {testRunMutation.isPending ? "Running..." : "Test"}
-            </Button>
-            <Button type="button" onClick={handleSave} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? "Saving..." : "Save"}
-            </Button>
-            <button
-              type="button"
-              onClick={togglePublish}
+      {/* ── Floating top bar ── */}
+      <header className="pointer-events-none absolute inset-x-3 top-3 z-20 flex items-center justify-between gap-3">
+        {/* Left group */}
+        <div className="pointer-events-auto flex min-w-0 items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 shadow-xl backdrop-blur">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 border-zinc-700"
+            onClick={() => router.push(`/${orgSlug}/flows`)}
+          >
+            Back
+          </Button>
+          <div className="h-4 w-px bg-zinc-700" />
+          <Input
+            value={flowName}
+            onChange={(event) => {
+              setFlowName(event.target.value);
+              setIsDirty(true);
+            }}
+            className="h-8 w-48 border-zinc-700 bg-transparent text-sm text-zinc-100 focus-visible:ring-0"
+          />
+          <Badge className={statusStyles[status]}>{status}</Badge>
+          {isDirty && (
+            <Badge className="border-zinc-700 bg-zinc-800 text-zinc-400">Unsaved</Badge>
+          )}
+          {notice && <span className="text-xs text-zinc-400">{notice}</span>}
+        </div>
+
+        {/* Right group */}
+        <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 shadow-xl backdrop-blur">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 border-zinc-700"
+            onClick={handleTestRun}
+            disabled={testRunMutation.isPending}
+          >
+            {testRunMutation.isPending ? "Running…" : "Test"}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8"
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? "Saving…" : "Save"}
+          </Button>
+          <button
+            type="button"
+            onClick={togglePublish}
+            className={cn(
+              "inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium transition-colors",
+              status === "ACTIVE"
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+                : "border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+            )}
+          >
+            <span
               className={cn(
-                "inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm font-medium",
-                status === "ACTIVE"
-                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
-                  : "border-zinc-700 bg-zinc-900 text-zinc-200"
+                "h-2 w-2 rounded-full",
+                status === "ACTIVE" ? "bg-emerald-400" : "bg-zinc-500"
               )}
-            >
-              <span
-                className={cn(
-                  "h-2.5 w-2.5 rounded-full",
-                  status === "ACTIVE" ? "bg-emerald-300" : "bg-zinc-500"
-                )}
-              />
-              Publish
-            </button>
-          </div>
+            />
+            Publish
+          </button>
         </div>
-
-        <div className="mt-3 flex items-center gap-2 lg:hidden">
-          <Button type="button" variant="outline" onClick={() => setMobilePaletteOpen(true)}>
-            Node Palette
-          </Button>
-          <Button type="button" variant="outline" onClick={() => setMobileInspectorOpen(true)}>
-            Inspector
-          </Button>
-        </div>
-
-        {notice ? <p className="mt-3 text-xs text-zinc-400">{notice}</p> : null}
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
-        <div className="hidden lg:block">
-          <NodePalette />
-        </div>
-
-        <ReactFlowProvider>
-          <FlowCanvas
-            nodes={nodes}
-            edges={edges}
-            viewport={viewport}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onSelectNode={setSelectedNodeId}
-            onDropNode={handleDropNode}
-            onViewportChange={setViewport}
-          />
-        </ReactFlowProvider>
-
-        <div className="hidden lg:block">
-          <InspectorPanel
-            node={selectedNode}
-            updateNodeData={updateNodeData}
-            updateSwitchBranches={updateSwitchBranches}
-          />
-        </div>
+      {/* ── Floating left panel — Node Palette ── */}
+      <div className="absolute bottom-3 left-3 top-17 z-10 w-67">
+        <NodePalette />
       </div>
 
-      {testLog ? (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+      {/* ── Floating right panel — Inspector ── */}
+      <div className="absolute bottom-3 right-3 top-17 z-10 w-75">
+        <InspectorPanel
+          node={selectedNode}
+          updateNodeData={updateNodeData}
+          updateSwitchBranches={updateSwitchBranches}
+        />
+      </div>
+
+      {/* ── Test log toast ── */}
+      {testLog && (
+        <div className="absolute bottom-3 left-1/2 z-20 w-120 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl border border-zinc-800 bg-zinc-950/95 p-4 shadow-2xl backdrop-blur">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-zinc-200">Test Run Results (Dry Run)</h3>
-            <Button size="sm" variant="ghost" onClick={() => setTestLog(null)}>
+            <h3 className="text-sm font-medium text-zinc-200">Test Run Results</h3>
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setTestLog(null)}>
               Dismiss
             </Button>
           </div>
-          <div className="mt-3 max-h-60 space-y-1 overflow-y-auto">
+          <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
             {testLog.map((entry, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
-                <Badge className="shrink-0 border-zinc-700 bg-zinc-800 text-zinc-300">
-                  {entry.action}
-                </Badge>
+                <Badge className="shrink-0 border-zinc-700 bg-zinc-800 text-zinc-300">{entry.action}</Badge>
                 <span className="text-zinc-400">{entry.detail}</span>
               </div>
             ))}
-            {testLog.length === 0 ? (
+            {testLog.length === 0 && (
               <p className="text-xs text-zinc-500">No steps executed. Check that the flow has a matching trigger.</p>
-            ) : null}
+            )}
           </div>
         </div>
-      ) : null}
+      )}
 
-      {mobilePaletteOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 lg:hidden">
-          <div className="h-[80vh] w-full max-w-sm">
-            <NodePalette />
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-3 w-full"
-              onClick={() => setMobilePaletteOpen(false)}
-            >
-              Close
-            </Button>
-          </div>
+      {/* ── Delete confirmation ── */}
+      {pendingDeleteNodeId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+          <DialogContent className="z-50 w-full max-w-md border-zinc-700 bg-zinc-900 text-zinc-100">
+            <DialogHeader>
+              <DialogTitle>Delete selected node?</DialogTitle>
+            </DialogHeader>
+            <p className="mt-1 text-sm text-zinc-400">
+              This removes the node and all connected edges from this flow.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPendingDeleteNodeId(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteNode}>
+                Delete node
+              </Button>
+            </div>
+          </DialogContent>
         </div>
-      ) : null}
-
-      {mobileInspectorOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 lg:hidden">
-          <div className="h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-3">
-            <InspectorPanel
-              node={selectedNode}
-              updateNodeData={updateNodeData}
-              updateSwitchBranches={updateSwitchBranches}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-3 w-full"
-              onClick={() => setMobileInspectorOpen(false)}
-            >
-              Close
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {pendingDeleteNodeId ? (
-        <Dialog>
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-            <DialogContent className="z-50 w-full max-w-md border-zinc-700 bg-zinc-900 text-zinc-100">
-              <DialogHeader>
-                <DialogTitle>Delete selected node?</DialogTitle>
-              </DialogHeader>
-              <p className="mt-1 text-sm text-zinc-400">
-                This removes the node and all connected edges from this flow.
-              </p>
-              <div className="mt-4 flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setPendingDeleteNodeId(null)}>
-                  Cancel
-                </Button>
-                <Button variant="destructive" onClick={handleDeleteNode}>
-                  Delete node
-                </Button>
-              </div>
-            </DialogContent>
-          </div>
-        </Dialog>
-      ) : null}
-    </section>
+      )}
+    </div>
   );
 }

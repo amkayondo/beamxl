@@ -79,7 +79,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
   }
 
   return (
-    <div className="h-full min-h-[640px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/50">
+    <div className="h-full w-full overflow-hidden bg-zinc-950">
       <ReactFlow
         nodes={props.nodes}
         edges={props.edges}
@@ -95,19 +95,18 @@ export function FlowCanvas(props: FlowCanvasProps) {
         onDragOver={onDragOver}
         onDrop={onDrop}
         deleteKeyCode={null}
-        fitView
-        minZoom={0.3}
-        maxZoom={1.8}
-        className="bg-[radial-gradient(circle_at_top,_rgba(24,24,27,0.9)_0%,_rgba(9,9,11,0.98)_55%)]"
+        minZoom={0.2}
+        maxZoom={2}
+        className="bg-[radial-gradient(circle_at_top,rgba(24,24,27,0.9)_0%,rgba(9,9,11,0.98)_55%)]"
       >
         <MiniMap
           pannable
           zoomable
-          className="!bg-zinc-900/90"
+          className="bg-zinc-900/90!"
           nodeColor="rgba(63,63,70,0.9)"
           maskColor="rgba(2,6,23,0.35)"
         />
-        <Controls className="!border-zinc-700 !bg-zinc-900/90 [&_button]:!border-zinc-700 [&_button]:!bg-zinc-900 [&_button]:!text-zinc-200" />
+        <Controls className="border-zinc-700! bg-zinc-900/90! [&_button]:border-zinc-700! [&_button]:bg-zinc-900! [&_button]:text-zinc-200!" />
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} color="rgba(148, 163, 184, 0.22)" />
       </ReactFlow>
     </div>
