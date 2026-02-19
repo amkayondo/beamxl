@@ -67,8 +67,24 @@ export const protectedProcedure = t.procedure
 
 const orgIdInputSchema = z.object({ orgId: z.string().min(1) });
 
-export const orgProcedure = protectedProcedure.use(async ({ ctx, input, next }) => {
-  const parsed = orgIdInputSchema.safeParse(input);
+function resolveOrgInputCandidate(value: unknown) {
+  if (Array.isArray(value) && value.length === 1) {
+    return value[0];
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if ("json" in record) {
+      return record.json;
+    }
+  }
+
+  return value;
+}
+
+export const orgProcedure = protectedProcedure.use(async ({ ctx, input, getRawInput, next }) => {
+  const rawInput = input ?? (await getRawInput());
+  const parsed = orgIdInputSchema.safeParse(resolveOrgInputCandidate(rawInput));
   if (!parsed.success) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -107,4 +123,17 @@ export const adminProcedure = orgProcedure.use(({ ctx, next }) => {
 export const ownerProcedure = orgProcedure.use(({ ctx, next }) => {
   assertRole(ctx.orgRole, "OWNER");
   return next();
+});
+
+export const superAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const currentUser = await ctx.db.query.user.findFirst({
+    where: (u: { id: any }, { eq }: { eq: any }) => eq(u.id, ctx.session.user.id),
+    columns: { systemRole: true },
+  });
+
+  if (currentUser?.systemRole !== "ADMIN") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "System admin access required" });
+  }
+
+  return next({ ctx });
 });

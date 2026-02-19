@@ -3,11 +3,13 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/server/db";
 import { contacts, conversations, messageLogs } from "@/server/db/schema";
 import { birdWhatsAppAdapter } from "@/server/adapters/messaging/bird.adapter";
+import { resendEmailAdapter } from "@/server/adapters/messaging/resend-email.adapter";
+import { checkComplianceForOutbound } from "@/server/services/compliance.service";
 
 async function ensureConversation(input: {
   orgId: string;
   contactId: string;
-  channel?: "WHATSAPP" | "VOICE";
+  channel?: "WHATSAPP" | "VOICE" | "EMAIL";
 }) {
   const existing = await db.query.conversations.findFirst({
     where: (c, { and, eq }) =>
@@ -43,7 +45,12 @@ export async function sendConversationMessage(input: {
   contactId: string;
   invoiceId?: string;
   body: string;
+  channel?: "WHATSAPP" | "EMAIL";
+  emailSubject?: string;
+  emailHtml?: string;
 }) {
+  const channel = input.channel ?? "WHATSAPP";
+
   const contact = await db.query.contacts.findFirst({
     where: (c, { and, eq }) =>
       and(eq(c.id, input.contactId), eq(c.orgId, input.orgId)),
@@ -53,16 +60,56 @@ export async function sendConversationMessage(input: {
     throw new Error("Contact not found");
   }
 
+  // Compliance gate — block outbound if not allowed
+  const compliance = await checkComplianceForOutbound({
+    orgId: input.orgId,
+    contactId: input.contactId,
+    channel,
+  });
+
+  if (!compliance.allowed) {
+    throw new Error(
+      `Compliance blocked: ${compliance.reason ?? "Message not allowed"}`,
+    );
+  }
+
   const conversation = await ensureConversation({
     orgId: input.orgId,
     contactId: input.contactId,
-    channel: "WHATSAPP",
+    channel,
   });
 
-  const providerMessage = await birdWhatsAppAdapter.sendTextMessage({
-    toE164: contact.phoneE164,
-    body: input.body,
-  });
+  let providerMessageId: string;
+  let logChannel: "WHATSAPP" | "EMAIL";
+  let logProvider: string;
+
+  if (channel === "EMAIL") {
+    // --- Email path ---
+    if (!contact.email) {
+      throw new Error("Contact has no email address");
+    }
+
+    const emailResult = await resendEmailAdapter.sendEmail({
+      to: contact.email,
+      subject: input.emailSubject ?? "Payment Reminder",
+      html: input.emailHtml ?? input.body,
+      text: input.body,
+    });
+
+    providerMessageId = emailResult.providerMessageId;
+    logChannel = "EMAIL";
+    logProvider = "RESEND";
+  } else {
+    // --- WhatsApp path (default) ---
+    const providerMessage = await birdWhatsAppAdapter.sendTextMessage({
+      toE164: contact.phoneE164,
+      body: input.body,
+    });
+
+    providerMessageId = providerMessage.providerMessageId;
+    logChannel = "WHATSAPP";
+    logProvider = "BIRD";
+  }
 
   const messageLogId = crypto.randomUUID();
 
@@ -73,9 +120,9 @@ export async function sendConversationMessage(input: {
     contactId: input.contactId,
     invoiceId: input.invoiceId ?? null,
     direction: "OUTBOUND",
-    channel: "WHATSAPP",
-    provider: "BIRD",
-    providerMessageId: providerMessage.providerMessageId,
+    channel: logChannel,
+    provider: logProvider,
+    providerMessageId,
     body: input.body,
     deliveryStatus: "SENT",
     sentAt: new Date(),
@@ -91,7 +138,7 @@ export async function sendConversationMessage(input: {
 
   return {
     messageLogId,
-    providerMessageId: providerMessage.providerMessageId,
+    providerMessageId,
   };
 }
 

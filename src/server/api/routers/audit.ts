@@ -13,6 +13,7 @@ export const auditRouter = createTRPCRouter({
       z.object({
         orgId: z.string().min(1),
         action: z.string().optional(),
+        entityType: z.string().optional(),
         from: z.string().datetime().optional(),
         to: z.string().datetime().optional(),
         page: z.number().int().min(1).default(1),
@@ -25,6 +26,7 @@ export const auditRouter = createTRPCRouter({
       const whereClause = and(
         eq(auditLogs.orgId, input.orgId),
         input.action ? eq(auditLogs.action, input.action) : undefined,
+        input.entityType ? eq(auditLogs.entityType, input.entityType) : undefined,
         input.from ? gte(auditLogs.createdAt, new Date(input.from)) : undefined,
         input.to ? lte(auditLogs.createdAt, new Date(input.to)) : undefined
       );
@@ -35,6 +37,9 @@ export const auditRouter = createTRPCRouter({
           orderBy: (a, { desc }) => [desc(a.createdAt)],
           offset,
           limit: input.pageSize,
+          with: {
+            actorUser: true,
+          },
         }),
         ctx.db
           .select({ count: sql<number>`count(*)` })

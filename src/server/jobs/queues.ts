@@ -14,6 +14,7 @@ export const queueNames = {
   receiptDispatch: "receipt-dispatch",
   unresponsiveDetection: "unresponsive-detection",
   voiceEscalation: "voice-escalation",
+  flowExecution: "flow-execution",
 } as const;
 
 export const invoiceGenerationQueue = new Queue(queueNames.invoiceGeneration, {
@@ -40,5 +41,9 @@ export const unresponsiveDetectionQueue = new Queue(
 );
 
 export const voiceEscalationQueue = new Queue(queueNames.voiceEscalation, {
+  connection: redisConnection,
+});
+
+export const flowExecutionQueue = new Queue(queueNames.flowExecution, {
   connection: redisConnection,
 });

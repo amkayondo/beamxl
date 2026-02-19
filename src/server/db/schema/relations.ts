@@ -12,6 +12,13 @@ import { conversations } from "./conversations";
 import { auditLogs, callLogs, messageLogs } from "./logs";
 import { integrationSettings } from "./integrations";
 import { webhookEvents } from "./webhook-events";
+import { flowRuns, flows } from "./flows";
+import {
+  complianceSettings,
+  contactConsents,
+  stateComplianceRules,
+} from "./compliance";
+import { notifications } from "./notifications";
 
 export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
@@ -19,6 +26,7 @@ export const userRelations = relations(user, ({ many }) => ({
   orgMemberships: many(orgMembers),
   assignedConversations: many(conversations),
   auditLogs: many(auditLogs),
+  notifications: many(notifications),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
@@ -50,6 +58,12 @@ export const orgRelations = relations(orgs, ({ one, many }) => ({
   auditLogs: many(auditLogs),
   integrationSettings: many(integrationSettings),
   webhookEvents: many(webhookEvents),
+  flows: many(flows),
+  flowRuns: many(flowRuns),
+  complianceSettings: many(complianceSettings),
+  stateComplianceRules: many(stateComplianceRules),
+  contactConsents: many(contactConsents),
+  notifications: many(notifications),
 }));
 
 export const orgMembersRelations = relations(orgMembers, ({ one }) => ({
@@ -78,6 +92,7 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
   messageLogs: many(messageLogs),
   callLogs: many(callLogs),
   contactTags: many(contactTags),
+  consents: many(contactConsents),
 }));
 
 export const tagsRelations = relations(tags, ({ one, many }) => ({
@@ -243,5 +258,64 @@ export const webhookEventsRelations = relations(webhookEvents, ({ one }) => ({
   org: one(orgs, {
     fields: [webhookEvents.orgId],
     references: [orgs.id],
+  }),
+}));
+
+export const flowsRelations = relations(flows, ({ one, many }) => ({
+  org: one(orgs, {
+    fields: [flows.orgId],
+    references: [orgs.id],
+  }),
+  updatedByUser: one(user, {
+    fields: [flows.updatedByUserId],
+    references: [user.id],
+  }),
+  runs: many(flowRuns),
+}));
+
+export const flowRunsRelations = relations(flowRuns, ({ one }) => ({
+  flow: one(flows, {
+    fields: [flowRuns.flowId],
+    references: [flows.id],
+  }),
+  org: one(orgs, {
+    fields: [flowRuns.orgId],
+    references: [orgs.id],
+  }),
+}));
+
+export const contactConsentsRelations = relations(contactConsents, ({ one }) => ({
+  org: one(orgs, {
+    fields: [contactConsents.orgId],
+    references: [orgs.id],
+  }),
+  contact: one(contacts, {
+    fields: [contactConsents.contactId],
+    references: [contacts.id],
+  }),
+}));
+
+export const complianceSettingsRelations = relations(complianceSettings, ({ one }) => ({
+  org: one(orgs, {
+    fields: [complianceSettings.orgId],
+    references: [orgs.id],
+  }),
+}));
+
+export const stateComplianceRulesRelations = relations(stateComplianceRules, ({ one }) => ({
+  org: one(orgs, {
+    fields: [stateComplianceRules.orgId],
+    references: [orgs.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  org: one(orgs, {
+    fields: [notifications.orgId],
+    references: [orgs.id],
+  }),
+  user: one(user, {
+    fields: [notifications.userId],
+    references: [user.id],
   }),
 }));

@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { unique } from "drizzle-orm/pg-core";
 
 import { createTable } from "./common";
-import { languageCodeEnum } from "./enums";
+import { channelEnum, languageCodeEnum } from "./enums";
 import { orgs } from "./organizations";
 
 export const messageTemplates = createTable(
@@ -20,6 +20,9 @@ export const messageTemplates = createTable(
     language: languageCodeEnum("language").notNull().default("EN"),
     version: d.integer("version").notNull().default(1),
     body: d.text("body").notNull(),
+    subject: d.text("subject"),
+    htmlBody: d.text("html_body"),
+    channel: channelEnum("channel"),
     isActive: d.boolean("is_active").notNull().default(true),
     createdAt: d
       .timestamp("created_at", { withTimezone: true })

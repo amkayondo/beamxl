@@ -1,4 +1,4 @@
-export type PaymentProvider = "STRIPE" | "MOMO";
+export type PaymentProvider = "STRIPE";
 
 export type PaymentWebhookEvent = {
   providerEventId: string;

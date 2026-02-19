@@ -5,6 +5,7 @@ import { db } from "@/server/db";
 import { invoices, webhookEvents } from "@/server/db/schema";
 import { stripePaymentAdapter } from "@/server/adapters/payments/stripe.adapter";
 import { enqueueReceiptJob } from "@/server/jobs/producers";
+import { createNotification } from "@/server/services/notification.service";
 import { recordPaymentFromWebhook } from "@/server/services/payment.service";
 import { writeAuditLog } from "@/server/services/audit.service";
 
@@ -69,6 +70,16 @@ export async function POST(request: Request) {
           await enqueueReceiptJob({
             orgId: invoice.orgId,
             invoiceId: invoice.id,
+          });
+
+          const formattedAmount = ((event.amountMinor ?? 0) / 100).toLocaleString("en-US", { style: "currency", currency: event.currency });
+          await createNotification({
+            orgId: invoice.orgId,
+            type: "PAYMENT_RECEIVED",
+            title: "Payment received",
+            body: `Payment of ${formattedAmount} received for invoice ${invoice.invoiceNumber}`,
+            link: `invoices`,
+            metadata: { invoiceId: invoice.id, amount: event.amountMinor },
           });
         }
 

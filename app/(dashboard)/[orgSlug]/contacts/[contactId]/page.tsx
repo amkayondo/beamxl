@@ -1,3 +1,4 @@
+import { ContactEditButton } from "@/components/contacts/contact-edit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -30,9 +31,22 @@ export default async function ContactDetailPage({
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{contact?.name ?? "Contact"}</h1>
-        <p className="text-sm text-muted-foreground">Ledger and communication history.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">{contact?.name ?? "Contact"}</h1>
+          <p className="text-sm text-muted-foreground">Ledger and communication history.</p>
+        </div>
+        {contact ? (
+          <ContactEditButton
+            orgId={org.orgId}
+            contact={{
+              id: contact.id,
+              name: contact.name,
+              phoneE164: contact.phoneE164,
+              language: contact.language,
+            }}
+          />
+        ) : null}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

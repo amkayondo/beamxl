@@ -6,6 +6,7 @@ import { handleOverdueEscalationJob } from "@/server/jobs/handlers/overdue-escal
 import { handleReceiptSendJob } from "@/server/jobs/handlers/receipt-send";
 import { handleReminderSendJob } from "@/server/jobs/handlers/reminder-send";
 import { handleVoiceEscalationJob } from "@/server/jobs/handlers/voice-escalation";
+import { handleFlowExecutionJob } from "@/server/jobs/handlers/flow-execution";
 
 export function createWorkers() {
   const invoiceGenerationWorker = new Worker(
@@ -38,11 +39,18 @@ export function createWorkers() {
     { connection: redisConnection }
   );
 
+  const flowExecutionWorker = new Worker(
+    queueNames.flowExecution,
+    async (job) => handleFlowExecutionJob(job.data),
+    { connection: redisConnection }
+  );
+
   return [
     invoiceGenerationWorker,
     reminderWorker,
     overdueWorker,
     receiptWorker,
     voiceWorker,
+    flowExecutionWorker,
   ];
 }

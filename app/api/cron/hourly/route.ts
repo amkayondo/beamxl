@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { invoices, orgs } from "@/server/db/schema";
 import {
+  enqueueFlowTriggerJob,
   enqueueOverdueTransitionJob,
   enqueueReminderJob,
 } from "@/server/jobs/producers";
@@ -46,14 +47,26 @@ export async function GET() {
                 ? "FINAL_NOTICE"
                 : null;
 
-      if (!templateKey) continue;
+      if (templateKey) {
+        await enqueueReminderJob({
+          orgId: org.id,
+          invoiceId: invoice.id,
+          templateKey,
+          scheduledAt: now.toISOString(),
+        });
+      }
 
-      await enqueueReminderJob({
-        orgId: org.id,
-        invoiceId: invoice.id,
-        templateKey,
-        scheduledAt: now.toISOString(),
-      });
+      if (diff > 0) {
+        await enqueueFlowTriggerJob({
+          orgId: org.id,
+          eventContext: {
+            orgId: org.id,
+            eventType: "Invoice Overdue",
+            invoiceId: invoice.id,
+          },
+          mode: "live",
+        });
+      }
     }
   }
 

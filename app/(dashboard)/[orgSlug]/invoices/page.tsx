@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -28,9 +29,14 @@ export default async function InvoicesPage({
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Invoices</h1>
-        <p className="text-sm text-muted-foreground">Track due, overdue and paid invoices.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Invoices</h1>
+          <p className="text-sm text-muted-foreground">Track due, overdue and paid invoices.</p>
+        </div>
+        <Link href={`/${orgSlug}/invoices/import`}>
+          <Button variant="outline">Import CSV</Button>
+        </Link>
       </div>
 
       <Card>

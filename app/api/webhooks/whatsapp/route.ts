@@ -6,8 +6,10 @@ import { contacts, messageLogs, webhookEvents } from "@/server/db/schema";
 import { birdWhatsAppAdapter } from "@/server/adapters/messaging/bird.adapter";
 import { recordInboundMessage } from "@/server/services/conversation.service";
 import { handleDeliveryStatus } from "@/server/services/reminder.service";
+import { revokeAllConsent } from "@/server/services/compliance.service";
 import { isStopKeyword, markContactOptedOut } from "@/server/services/optout.service";
 import { writeAuditLog } from "@/server/services/audit.service";
+import { createNotification } from "@/server/services/notification.service";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -76,11 +78,31 @@ export async function POST(request: Request) {
       providerMessageId: event.providerMessageId,
     });
 
+    if (inbound) {
+      const contact = await db.query.contacts.findFirst({
+        where: (c, { eq }) => eq(c.id, inbound.contactId),
+      });
+
+      await createNotification({
+        orgId,
+        type: "CONTACT_REPLIED",
+        title: "New message",
+        body: `${contact?.name ?? "Contact"} sent a message`,
+        link: `conversations`,
+        metadata: { contactId: inbound.contactId },
+      });
+    }
+
     if (inbound && (await isStopKeyword(event.body))) {
       await markContactOptedOut({
         orgId,
         contactId: inbound.contactId,
         reason: "STOP",
+      });
+
+      await revokeAllConsent({
+        orgId,
+        contactId: inbound.contactId,
       });
 
       await writeAuditLog({
@@ -89,6 +111,15 @@ export async function POST(request: Request) {
         action: "OPT_OUT_RECEIVED",
         entityType: "Contact",
         entityId: inbound.contactId,
+      });
+
+      await createNotification({
+        orgId,
+        type: "CONTACT_OPTED_OUT",
+        title: "Contact opted out",
+        body: `A contact has opted out of communications`,
+        link: `contacts`,
+        metadata: { contactId: inbound.contactId },
       });
     }
 

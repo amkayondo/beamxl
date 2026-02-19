@@ -12,4 +12,7 @@ export * from "./conversations";
 export * from "./logs";
 export * from "./integrations";
 export * from "./webhook-events";
+export * from "./flows";
+export * from "./compliance";
+export * from "./notifications";
 export * from "./relations";

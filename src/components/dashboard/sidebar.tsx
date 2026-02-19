@@ -8,10 +8,14 @@ const navItems = [
   { label: "Plans", href: "plans" },
   { label: "Invoices", href: "invoices" },
   { label: "Conversations", href: "conversations" },
+  { label: "Flows", href: "flows" },
   { label: "Automation", href: "automation" },
+  { label: "Templates", href: "templates" },
   { label: "Calls", href: "calls" },
   { label: "Reports", href: "reports" },
+  { label: "Audit Logs", href: "audit-logs" },
   { label: "Settings", href: "settings" },
+  { label: "Compliance", href: "settings/compliance" },
 ];
 
 export function DashboardSidebar(props: { orgSlug: string; active?: string }) {

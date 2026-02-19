@@ -1,33 +1,50 @@
-import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { env } from "@/env";
 import { createCheckoutForInvoice } from "@/server/services/payment.service";
 import { db } from "@/server/db";
-import { invoices } from "@/server/db/schema";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ invoiceId: string }> }
 ) {
   const { invoiceId } = await context.params;
+  const url = new URL(request.url);
+  const token = url.searchParams.get("token");
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Invalid payment link" },
+      { status: 403 }
+    );
+  }
 
   const invoice = await db.query.invoices.findFirst({
-    where: (i, { eq }) => eq(i.id, invoiceId),
+    where: (i, { and, eq }) =>
+      and(eq(i.id, invoiceId), eq(i.publicPayToken, token)),
   });
 
   if (!invoice) {
-    return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Invalid payment link" },
+      { status: 403 }
+    );
   }
 
   if (invoice.status === "PAID") {
-    return NextResponse.json({ error: "Invoice already paid" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invoice already paid" },
+      { status: 400 }
+    );
   }
+
+  const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const returnUrl = `${baseUrl}/pay/i/${invoice.id}?token=${invoice.publicPayToken}`;
 
   const checkout = await createCheckoutForInvoice({
     orgId: invoice.orgId,
     invoiceId: invoice.id,
-    returnUrl: `${env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/pay/i/${invoice.id}`,
+    returnUrl,
   });
 
   return NextResponse.json({
@@ -37,23 +54,39 @@ export async function POST(
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ invoiceId: string }> }
 ) {
   const { invoiceId } = await context.params;
+  const url = new URL(request.url);
+  const token = url.searchParams.get("token");
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Invalid payment link" },
+      { status: 403 }
+    );
+  }
 
   const invoice = await db.query.invoices.findFirst({
-    where: (i, { eq }) => eq(i.id, invoiceId),
+    where: (i, { and, eq }) =>
+      and(eq(i.id, invoiceId), eq(i.publicPayToken, token)),
   });
 
   if (!invoice) {
-    return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Invalid payment link" },
+      { status: 403 }
+    );
   }
+
+  const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const returnUrl = `${baseUrl}/pay/i/${invoice.id}?token=${invoice.publicPayToken}`;
 
   const checkout = await createCheckoutForInvoice({
     orgId: invoice.orgId,
     invoiceId: invoice.id,
-    returnUrl: `${env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/pay/i/${invoice.id}`,
+    returnUrl,
   });
 
   return NextResponse.redirect(checkout.checkoutUrl);

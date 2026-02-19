@@ -48,6 +48,8 @@ export const automationTriggerEnum = pgEnum("automation_trigger", [
 export const automationChannelEnum = pgEnum("automation_channel", [
   "WHATSAPP",
   "VOICE",
+  "EMAIL",
+  "SMS",
 ]);
 
 export const messageDirectionEnum = pgEnum("message_direction", [
@@ -71,7 +73,7 @@ export const conversationStatusEnum = pgEnum("conversation_status", [
   "CLOSED",
 ]);
 
-export const channelEnum = pgEnum("channel", ["WHATSAPP", "VOICE"]);
+export const channelEnum = pgEnum("channel", ["WHATSAPP", "VOICE", "EMAIL", "SMS"]);
 
 export const callStatusEnum = pgEnum("call_status", [
   "QUEUED",
@@ -111,3 +113,42 @@ export const webhookStatusEnum = pgEnum("webhook_status", [
   "PROCESSED",
   "FAILED",
 ]);
+
+export const flowStatusEnum = pgEnum("flow_status", [
+  "DRAFT",
+  "ACTIVE",
+  "PAUSED",
+]);
+
+export const flowRunStatusEnum = pgEnum("flow_run_status", [
+  "RUNNING",
+  "COMPLETED",
+  "FAILED",
+  "DRY_RUN",
+]);
+
+export const consentChannelEnum = pgEnum("consent_channel", [
+  "SMS",
+  "WHATSAPP",
+  "VOICE",
+  "EMAIL",
+]);
+
+export const consentMethodEnum = pgEnum("consent_method", [
+  "WRITTEN",
+  "VERBAL",
+  "ELECTRONIC",
+  "IMPORTED",
+]);
+
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "PAYMENT_RECEIVED",
+  "CONTACT_REPLIED",
+  "CONTACT_OPTED_OUT",
+  "AUTOMATION_FAILED",
+  "FLOW_COMPLETED",
+  "IMPORT_COMPLETED",
+  "COMPLIANCE_BLOCKED",
+]);
+
+export const systemRoleEnum = pgEnum("system_role", ["USER", "ADMIN"]);

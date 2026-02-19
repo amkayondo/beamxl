@@ -1,9 +1,13 @@
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   createTRPCRouter,
+  adminProcedure,
   orgProcedure,
 } from "@/server/api/trpc";
+import { conversations } from "@/server/db/schema";
+import { writeAuditLog } from "@/server/services/audit.service";
 import {
   listConversationMessages,
   listConversations,
@@ -50,5 +54,53 @@ export const conversationsRouter = createTRPCRouter({
         items,
         total: items.length,
       };
+    }),
+
+  assign: adminProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        contactId: z.string().min(1),
+        assignedToUserId: z.string().nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const conversation = await ctx.db.query.conversations.findFirst({
+        where: (c, { and, eq }) =>
+          and(
+            eq(c.orgId, input.orgId),
+            eq(c.contactId, input.contactId),
+            eq(c.channel, "WHATSAPP")
+          ),
+      });
+
+      if (!conversation) {
+        throw new Error("Conversation not found");
+      }
+
+      await ctx.db
+        .update(conversations)
+        .set({
+          assignedToUserId: input.assignedToUserId,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(conversations.id, conversation.id)
+          )
+        );
+
+      await writeAuditLog({
+        orgId: input.orgId,
+        actorType: "USER",
+        actorUserId: ctx.session.user.id,
+        action: "CONVERSATION_ASSIGNED",
+        entityType: "Conversation",
+        entityId: conversation.id,
+        before: { assignedToUserId: conversation.assignedToUserId },
+        after: { assignedToUserId: input.assignedToUserId },
+      });
+
+      return { ok: true };
     }),
 });

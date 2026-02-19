@@ -128,3 +128,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .flow-node {
+    @apply rounded-[14px] border border-zinc-800 bg-zinc-900/95 p-3 shadow-sm transition-all duration-150 hover:border-zinc-700 hover:shadow-[0_8px_28px_rgba(0,0,0,0.35)];
+  }
+
+  .flow-node-selected {
+    @apply border-blue-400/70 shadow-[0_0_0_1px_rgba(96,165,250,0.35),0_10px_26px_rgba(59,130,246,0.2)];
+  }
+}
+
+.react-flow__panel {
+  color: rgb(228 228 231);
+}
+
+.react-flow__controls {
+  border-radius: 12px;
+}
+
+.react-flow__minimap {
+  border-radius: 12px;
+  border: 1px solid rgb(63 63 70 / 0.8);
+}

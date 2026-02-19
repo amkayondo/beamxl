@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { OrgSwitcher } from "@/components/dashboard/org-switcher";
 import { getSession } from "@/server/better-auth/server";
 import { api } from "@/trpc/server";
@@ -44,14 +45,17 @@ export default async function DashboardLayout({
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Workspace</p>
               <p className="text-lg font-medium">{activeOrg.name}</p>
             </div>
-            <OrgSwitcher
-              orgs={orgs.map((org) => ({
-                orgId: org.orgId,
-                slug: org.slug,
-                name: org.name,
-              }))}
-              currentSlug={activeOrg.slug}
-            />
+            <div className="flex items-center gap-4">
+              <NotificationBell orgId={activeOrg.orgId} />
+              <OrgSwitcher
+                orgs={orgs.map((org) => ({
+                  orgId: org.orgId,
+                  slug: org.slug,
+                  name: org.name,
+                }))}
+                currentSlug={activeOrg.slug}
+              />
+            </div>
           </header>
           <div className="p-8">{children}</div>
         </main>

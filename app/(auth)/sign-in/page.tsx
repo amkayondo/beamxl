@@ -56,6 +56,7 @@ export default async function SignInPage() {
                   provider: "google",
                   callbackURL: "/",
                 },
+                headers: await headers(),
               });
 
               if (res.url) {

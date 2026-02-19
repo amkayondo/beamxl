@@ -20,6 +20,8 @@ export const contacts = createTable(
     phoneE164: d.text("phone_e164").notNull(),
     email: d.text("email"),
     language: languageCodeEnum("language").notNull().default("EN"),
+    timezone: d.text("timezone").default("America/New_York"),
+    stateCode: d.text("state_code"),
     optedOutAt: d.timestamp("opted_out_at", { withTimezone: true }),
     optOutReason: d.text("opt_out_reason"),
     lastInboundAt: d.timestamp("last_inbound_at", { withTimezone: true }),

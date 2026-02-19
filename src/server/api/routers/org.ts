@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { writeAuditLog } from "@/server/services/audit.service";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, ownerProcedure, protectedProcedure } from "@/server/api/trpc";
 import { orgMembers, orgs } from "@/server/db/schema";
 
 function slugifyOrgName(name: string) {
@@ -31,6 +31,7 @@ export const orgRouter = createTRPCRouter({
       role: row.role,
       status: row.status,
       defaultCurrency: row.org.defaultCurrency,
+      timezone: row.org.timezone,
     }));
   }),
 
@@ -135,5 +136,42 @@ export const orgRouter = createTRPCRouter({
           user: true,
         },
       });
+    }),
+
+  updateOrg: ownerProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        name: z.string().min(2).optional(),
+        defaultCurrency: z.string().optional(),
+        timezone: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const updates: Record<string, unknown> = { updatedAt: new Date() };
+      if (input.name !== undefined) updates.name = input.name;
+      if (input.defaultCurrency !== undefined) updates.defaultCurrency = input.defaultCurrency;
+      if (input.timezone !== undefined) updates.timezone = input.timezone;
+
+      await ctx.db
+        .update(orgs)
+        .set(updates)
+        .where(eq(orgs.id, input.orgId));
+
+      await writeAuditLog({
+        orgId: input.orgId,
+        actorType: "USER",
+        actorUserId: ctx.session.user.id,
+        action: "ORG_UPDATED",
+        entityType: "Organization",
+        entityId: input.orgId,
+        after: {
+          name: input.name,
+          defaultCurrency: input.defaultCurrency,
+          timezone: input.timezone,
+        },
+      });
+
+      return { ok: true };
     }),
 });

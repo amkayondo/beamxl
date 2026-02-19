@@ -1,5 +1,7 @@
 import type { CallAdapter } from "./types";
 
+// TODO: Replace mock implementation with real Twilio SDK integration
+// Requires: twilio npm package, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN env vars
 export class TwilioCallAdapter implements CallAdapter {
   provider = "TWILIO" as const;
 

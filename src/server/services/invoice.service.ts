@@ -29,7 +29,7 @@ export async function generateInvoiceForPlan(input: {
   const payToken = crypto.randomUUID();
   const dueDate = input.periodEnd;
 
-  const payLinkUrl = `${env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/pay/i/${invoiceId}`;
+  const payLinkUrl = `${env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/pay/i/${invoiceId}?token=${payToken}`;
 
   await db.insert(invoices).values({
     id: invoiceId,
