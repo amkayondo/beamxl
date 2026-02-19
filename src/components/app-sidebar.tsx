@@ -1,147 +1,193 @@
 "use client"
 
 import * as React from "react"
-import { usePathname } from "next/navigation"
-import {
-  BarChart3Icon,
-  BellIcon,
-  ClipboardListIcon,
-  CreditCardIcon,
-  FileTextIcon,
-  GitBranchIcon,
-  LayoutDashboardIcon,
-  MessageSquareIcon,
-  PhoneIcon,
-  Settings2Icon,
-  ShieldIcon,
-  UsersIcon,
-  WorkflowIcon,
-  ZapIcon,
-} from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
+import { NavProjects } from "@/components/nav-projects"
+import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  SidebarSeparator,
 } from "@/components/ui/sidebar"
+import { GalleryVerticalEndIcon, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon } from "lucide-react"
 
-type OrgItem = {
-  orgId: string
-  slug: string
-  name: string
-}
-
-type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
-  orgSlug: string
-  orgs: OrgItem[]
-}
-
-export function AppSidebar({ orgSlug, orgs, ...props }: AppSidebarProps) {
-  const pathname = usePathname()
-
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/")
-
-  const navMain = [
+// This is sample data.
+const data = {
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  teams: [
     {
-      title: "Overview",
-      url: `/${orgSlug}/overview`,
-      icon: <LayoutDashboardIcon />,
-      isActive: isActive(`/${orgSlug}/overview`),
+      name: "Acme Inc",
+      logo: (
+        <GalleryVerticalEndIcon
+        />
+      ),
+      plan: "Enterprise",
     },
     {
-      title: "Contacts",
-      url: `/${orgSlug}/contacts`,
-      icon: <UsersIcon />,
-      isActive: isActive(`/${orgSlug}/contacts`),
+      name: "Acme Corp.",
+      logo: (
+        <AudioLinesIcon
+        />
+      ),
+      plan: "Startup",
     },
     {
-      title: "Plans",
-      url: `/${orgSlug}/plans`,
-      icon: <CreditCardIcon />,
-      isActive: isActive(`/${orgSlug}/plans`),
+      name: "Evil Corp.",
+      logo: (
+        <TerminalIcon
+        />
+      ),
+      plan: "Free",
+    },
+  ],
+  navMain: [
+    {
+      title: "Playground",
+      url: "#",
+      icon: (
+        <TerminalSquareIcon
+        />
+      ),
+      isActive: true,
+      items: [
+        {
+          title: "History",
+          url: "#",
+        },
+        {
+          title: "Starred",
+          url: "#",
+        },
+        {
+          title: "Settings",
+          url: "#",
+        },
+      ],
     },
     {
-      title: "Invoices",
-      url: `/${orgSlug}/invoices`,
-      icon: <FileTextIcon />,
-      isActive: isActive(`/${orgSlug}/invoices`),
+      title: "Models",
+      url: "#",
+      icon: (
+        <BotIcon
+        />
+      ),
+      items: [
+        {
+          title: "Genesis",
+          url: "#",
+        },
+        {
+          title: "Explorer",
+          url: "#",
+        },
+        {
+          title: "Quantum",
+          url: "#",
+        },
+      ],
     },
     {
-      title: "Conversations",
-      url: `/${orgSlug}/conversations`,
-      icon: <MessageSquareIcon />,
-      isActive: isActive(`/${orgSlug}/conversations`),
-    },
-    {
-      title: "Flows",
-      url: `/${orgSlug}/flows`,
-      icon: <GitBranchIcon />,
-      isActive: isActive(`/${orgSlug}/flows`),
-    },
-    {
-      title: "Automation",
-      url: `/${orgSlug}/automation`,
-      icon: <ZapIcon />,
-      isActive: isActive(`/${orgSlug}/automation`),
-    },
-    {
-      title: "Templates",
-      url: `/${orgSlug}/templates`,
-      icon: <WorkflowIcon />,
-      isActive: isActive(`/${orgSlug}/templates`),
-    },
-  ]
-
-  const navSecondary = [
-    {
-      title: "Calls",
-      url: `/${orgSlug}/calls`,
-      icon: <PhoneIcon />,
-    },
-    {
-      title: "Reports",
-      url: `/${orgSlug}/reports`,
-      icon: <BarChart3Icon />,
-    },
-    {
-      title: "Audit Logs",
-      url: `/${orgSlug}/audit-logs`,
-      icon: <ClipboardListIcon />,
+      title: "Documentation",
+      url: "#",
+      icon: (
+        <BookOpenIcon
+        />
+      ),
+      items: [
+        {
+          title: "Introduction",
+          url: "#",
+        },
+        {
+          title: "Get Started",
+          url: "#",
+        },
+        {
+          title: "Tutorials",
+          url: "#",
+        },
+        {
+          title: "Changelog",
+          url: "#",
+        },
+      ],
     },
     {
       title: "Settings",
-      url: `/${orgSlug}/settings`,
-      icon: <Settings2Icon />,
+      url: "#",
+      icon: (
+        <Settings2Icon
+        />
+      ),
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
+    },
+  ],
+  projects: [
+    {
+      name: "Design Engineering",
+      url: "#",
+      icon: (
+        <FrameIcon
+        />
+      ),
     },
     {
-      title: "Compliance",
-      url: `/${orgSlug}/settings/compliance`,
-      icon: <ShieldIcon />,
+      name: "Sales & Marketing",
+      url: "#",
+      icon: (
+        <PieChartIcon
+        />
+      ),
     },
-  ]
+    {
+      name: "Travel",
+      url: "#",
+      icon: (
+        <MapIcon
+        />
+      ),
+    },
+  ],
+}
 
-  const teams = orgs.map((org) => ({
-    name: org.name,
-    slug: org.slug,
-    logo: <BellIcon className="size-3.5" />,
-    plan: "Collections OS",
-  }))
-
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar className="border-r-0" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={teams} currentSlug={orgSlug} />
+        <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarSeparator />
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        <NavMain items={data.navMain} />
+        <NavProjects projects={data.projects} />
       </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={data.user} />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
