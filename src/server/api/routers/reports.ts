@@ -36,8 +36,8 @@ export const reportsRouter = createTRPCRouter({
         WHERE org_id = ${orgId}
           AND deleted_at IS NULL
       `);
-      const totalAr = Number(dsoResult.rows[0]?.total_ar ?? 0);
-      const totalSales90d = Number(dsoResult.rows[0]?.total_sales_90d ?? 0);
+      const totalAr = Number((dsoResult[0] as Record<string, unknown>)?.total_ar ?? 0);
+      const totalSales90d = Number((dsoResult[0] as Record<string, unknown>)?.total_sales_90d ?? 0);
       const dso = totalSales90d > 0 ? Math.round((totalAr / totalSales90d) * 90) : 0;
 
       // --- Aging Buckets ---
@@ -63,13 +63,13 @@ export const reportsRouter = createTRPCRouter({
           AND status NOT IN ('PAID', 'CANCELED', 'DRAFT')
           AND deleted_at IS NULL
       `);
-      const agingRow = agingResult.rows[0] ?? {};
+      const agingRow = (agingResult[0] ?? {}) as Record<string, unknown>;
       const agingBuckets = {
-        current: Number(agingRow.current_bucket ?? 0),
-        days1to30: Number(agingRow.days_1_to_30 ?? 0),
-        days31to60: Number(agingRow.days_31_to_60 ?? 0),
-        days61to90: Number(agingRow.days_61_to_90 ?? 0),
-        days90plus: Number(agingRow.days_90_plus ?? 0),
+        current: Number(agingRow["current_bucket"] ?? 0),
+        days1to30: Number(agingRow["days_1_to_30"] ?? 0),
+        days31to60: Number(agingRow["days_31_to_60"] ?? 0),
+        days61to90: Number(agingRow["days_61_to_90"] ?? 0),
+        days90plus: Number(agingRow["days_90_plus"] ?? 0),
       };
 
       // --- Cash Collected: last 12 months ---
@@ -84,7 +84,7 @@ export const reportsRouter = createTRPCRouter({
         GROUP BY DATE_TRUNC('month', paid_at)
         ORDER BY DATE_TRUNC('month', paid_at) ASC
       `);
-      const cashCollected = (cashResult.rows as Array<{ month: string; total_minor: string | number }>).map(
+      const cashCollected = (cashResult as Array<{ month: string; total_minor: string | number }>).map(
         (row) => ({
           month: row.month,
           totalMinor: Number(row.total_minor),
@@ -106,7 +106,7 @@ export const reportsRouter = createTRPCRouter({
         ORDER BY DATE_TRUNC('week', created_at) ASC
       `);
       const collectionRate = (
-        collectionResult.rows as Array<{
+        collectionResult as Array<{
           week: string;
           paid_count: number;
           total_count: number;
@@ -135,7 +135,7 @@ export const reportsRouter = createTRPCRouter({
         LIMIT 10
       `);
       const topDelinquent = (
-        delinquentResult.rows as Array<{
+        delinquentResult as Array<{
           contact_id: string;
           contact_name: string;
           overdue_amount: string | number;
@@ -159,7 +159,7 @@ export const reportsRouter = createTRPCRouter({
           AND status = 'SUCCEEDED'
           AND paid_at >= NOW() - INTERVAL '30 days'
       `);
-      const totalCollected30d = Number(collected30dResult.rows[0]?.total ?? 0);
+      const totalCollected30d = Number((collected30dResult[0] as Record<string, unknown>)?.total ?? 0);
 
       // --- Invoice Counts ---
       const countResult = await ctx.db.execute(sql`
@@ -173,12 +173,12 @@ export const reportsRouter = createTRPCRouter({
           AND deleted_at IS NULL
           AND status NOT IN ('DRAFT', 'CANCELED')
       `);
-      const countRow = countResult.rows[0] ?? {};
+      const countRow = (countResult[0] ?? {}) as Record<string, unknown>;
       const invoiceCount = {
-        total: Number((countRow as Record<string, unknown>).total ?? 0),
-        overdue: Number((countRow as Record<string, unknown>).overdue ?? 0),
-        paid: Number((countRow as Record<string, unknown>).paid ?? 0),
-        due: Number((countRow as Record<string, unknown>).due ?? 0),
+        total: Number(countRow.total ?? 0),
+        overdue: Number(countRow.overdue ?? 0),
+        paid: Number(countRow.paid ?? 0),
+        due: Number(countRow.due ?? 0),
       };
 
       return {

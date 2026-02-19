@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 
-import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
-import { OrgSwitcher } from "@/components/dashboard/org-switcher";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { getSession } from "@/server/better-auth/server";
 import { api } from "@/trpc/server";
 
@@ -36,30 +41,28 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-[1600px]">
-        <DashboardSidebar orgSlug={activeOrg.slug} />
-        <main className="flex-1">
-          <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-8 py-4 backdrop-blur">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Workspace</p>
-              <p className="text-lg font-medium">{activeOrg.name}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <NotificationBell orgId={activeOrg.orgId} />
-              <OrgSwitcher
-                orgs={orgs.map((org) => ({
-                  orgId: org.orgId,
-                  slug: org.slug,
-                  name: org.name,
-                }))}
-                currentSlug={activeOrg.slug}
-              />
-            </div>
-          </header>
-          <div className="p-8">{children}</div>
-        </main>
-      </div>
-    </div>
+    <SidebarProvider>
+      <AppSidebar
+        orgSlug={activeOrg.slug}
+        orgs={orgs.map((org) => ({
+          orgId: org.orgId,
+          slug: org.slug,
+          name: org.name,
+        }))}
+      />
+      <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-4 backdrop-blur">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="h-4" />
+          <div className="flex flex-1 items-center gap-2">
+            <span className="text-sm font-medium">{activeOrg.name}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell orgId={activeOrg.orgId} />
+          </div>
+        </header>
+        <div className="p-6">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
