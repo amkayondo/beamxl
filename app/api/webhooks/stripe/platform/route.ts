@@ -3,9 +3,13 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { db } from "@/server/db";
-import { orgs } from "@/server/db/schema";
+import { orgs, trialState } from "@/server/db/schema";
 import { requireStripeClient, requireStripeWebhookSecret } from "@/server/stripe";
 import { writeAuditLog } from "@/server/services/audit.service";
+import {
+  markTopupFailed,
+  settleTopupFromCheckoutSession,
+} from "@/server/services/billing-topup.service";
 import {
   getStripeAccountContext,
   markStripeWebhookFailed,
@@ -77,6 +81,16 @@ async function findOrgForPlatformEvent(event: Stripe.Event) {
     });
   }
 
+  if (event.type === "payment_intent.payment_failed") {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    const metadataOrgId = intent.metadata?.orgId;
+    if (metadataOrgId) {
+      return db.query.orgs.findFirst({
+        where: (o, { eq }) => eq(o.id, metadataOrgId),
+      });
+    }
+  }
+
   return null;
 }
 
@@ -101,6 +115,24 @@ async function syncSubscriptionToOrg(input: {
       updatedAt: new Date(),
     })
     .where(eq(orgs.id, input.orgId));
+
+  const subscriptionStatus = input.subscription.status;
+  if (subscriptionStatus === "active" || subscriptionStatus === "trialing") {
+    const existingTrial = await db.query.trialState.findFirst({
+      where: (t, { eq }) => eq(t.orgId, input.orgId),
+    });
+
+    if (existingTrial && existingTrial.status !== "CONVERTED") {
+      await db
+        .update(trialState)
+        .set({
+          status: "CONVERTED",
+          convertedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(trialState.id, existingTrial.id));
+    }
+  }
 }
 
 export async function POST(request: Request) {
@@ -193,6 +225,38 @@ export async function POST(request: Request) {
 
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        if (session.mode === "payment" && session.metadata?.checkoutType === "TOPUP") {
+          const metadataOrgId = session.metadata?.orgId ?? org?.id ?? null;
+          const topupId = session.metadata?.topupId ?? null;
+
+          if (metadataOrgId && topupId) {
+            await settleTopupFromCheckoutSession({
+              orgId: metadataOrgId,
+              topupId,
+              stripePaymentIntentId:
+                typeof session.payment_intent === "string"
+                  ? session.payment_intent
+                  : session.payment_intent?.id,
+              purchasedAt: new Date((session.created ?? Math.floor(Date.now() / 1000)) * 1000),
+            });
+
+            await writeAuditLog({
+              orgId: metadataOrgId,
+              actorType: "WEBHOOK",
+              action: "STRIPE_TOPUP_SETTLED",
+              entityType: "CreditTopup",
+              entityId: topupId,
+              after: {
+                eventType: event.type,
+                checkoutSessionId: session.id,
+              },
+            });
+          }
+
+          break;
+        }
+
         if (!org || session.mode !== "subscription") {
           break;
         }
@@ -225,6 +289,33 @@ export async function POST(request: Request) {
             updatedAt: new Date(),
           })
           .where(eq(orgs.id, org.id));
+        break;
+      }
+
+      case "payment_intent.payment_failed": {
+        const intent = event.data.object as Stripe.PaymentIntent;
+        const topupId = intent.metadata?.topupId;
+        const topupOrgId = intent.metadata?.orgId ?? org?.id;
+
+        if (topupId && topupOrgId) {
+          await markTopupFailed({
+            orgId: topupOrgId,
+            topupId,
+            reason: intent.last_payment_error?.message,
+          });
+
+          await writeAuditLog({
+            orgId: topupOrgId,
+            actorType: "WEBHOOK",
+            action: "STRIPE_TOPUP_FAILED",
+            entityType: "CreditTopup",
+            entityId: topupId,
+            after: {
+              eventType: event.type,
+              paymentIntentId: intent.id,
+            },
+          });
+        }
         break;
       }
 

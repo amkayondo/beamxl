@@ -22,6 +22,8 @@ export function BillingPageClient({
 }) {
   const utils = api.useUtils();
   const { data, isLoading } = api.billing.getState.useQuery({ orgId });
+  const { data: usage } = api.billing.usageMeter.useQuery({ orgId });
+  const { data: topupPacks } = api.billing.listTopupPacks.useQuery({ orgId });
 
   const disconnectMutation = api.billing.disconnectConnectAccount.useMutation({
     onSuccess: async () => {
@@ -30,6 +32,14 @@ export function BillingPageClient({
   });
 
   const subscriptionMutation = api.billing.createSubscriptionCheckout.useMutation({
+    onSuccess: (result) => {
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    },
+  });
+
+  const topupMutation = api.billing.createTopupCheckout.useMutation({
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -117,6 +127,60 @@ export function BillingPageClient({
               ? "Creating checkout..."
               : "Start Subscription Checkout"}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Usage Meter</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-muted-foreground">SMS</span>
+            <span>{usage ? `${usage.smsUsed} / ${usage.smsIncluded}` : "-"}</span>
+          </div>
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-muted-foreground">Email</span>
+            <span>{usage ? `${usage.emailUsed} / ${usage.emailIncluded}` : "-"}</span>
+          </div>
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-muted-foreground">Voice (sec)</span>
+            <span>
+              {usage ? `${usage.voiceSecondsUsed} / ${usage.voiceSecondsIncluded}` : "-"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">WhatsApp</span>
+            <span>{usage ? `${usage.whatsappUsed} / ${usage.whatsappIncluded}` : "-"}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Credit Top-up Packs</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          {(topupPacks ?? []).map((pack) => (
+            <div
+              key={pack.code}
+              className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+            >
+              <div className="space-y-1">
+                <p className="font-medium">{pack.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  +{pack.smsCredits} SMS, +{pack.emailCredits} Email, +{pack.voiceSeconds}s Voice
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => topupMutation.mutate({ orgId, packCode: pack.code })}
+                disabled={topupMutation.isPending}
+              >
+                ${(pack.priceMinor / 100).toFixed(2)}
+              </Button>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </section>

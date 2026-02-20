@@ -8,6 +8,7 @@ import {
   enqueueOverdueTransitionJob,
   enqueueReminderJob,
 } from "@/server/jobs/producers";
+import { processTrialLifecycleSweep } from "@/server/services/trial-lifecycle.service";
 
 function dayDiff(fromDate: Date, to: Date) {
   const from = new Date(
@@ -20,6 +21,8 @@ function dayDiff(fromDate: Date, to: Date) {
 export async function GET() {
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
+
+  await processTrialLifecycleSweep(now);
 
   const allOrgs = await db.query.orgs.findMany({
     where: (o, { isNull }) => isNull(o.deletedAt),

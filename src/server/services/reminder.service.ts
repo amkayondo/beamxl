@@ -41,7 +41,7 @@ export async function sendReminderForInvoice(input: {
   orgId: string;
   invoiceId: string;
   templateKey: keyof typeof fallbackTemplates;
-  channel?: "WHATSAPP" | "EMAIL";
+  channel?: "WHATSAPP" | "EMAIL" | "SMS";
 }) {
   const channel = input.channel ?? "WHATSAPP";
 
@@ -167,6 +167,47 @@ export async function sendReminderForInvoice(input: {
     };
   }
 
+  if (channel === "SMS") {
+    const smsTpl = await db.query.messageTemplates.findFirst({
+      where: (t, { and, eq }) =>
+        and(
+          eq(t.orgId, input.orgId),
+          eq(t.key, input.templateKey),
+          eq(t.channel, "SMS"),
+          eq(t.complianceLocked, false),
+          inArray(t.approvalStatus, ["APPROVED", "DRAFT"]),
+          eq(t.isActive, true)
+        ),
+      orderBy: (t, { desc }) => [desc(t.version)],
+    });
+
+    const messageBody = renderTemplate(
+      smsTpl?.body ?? fallbackTemplates[input.templateKey],
+      templateVars,
+    );
+
+    const result = await sendConversationMessage({
+      orgId: input.orgId,
+      contactId: invoice.contactId,
+      invoiceId: invoice.id,
+      body: `${messageBody}\n\nReply STOP to opt out.`,
+      channel: "SMS",
+    });
+
+    await db
+      .update(invoices)
+      .set({
+        lastReminderAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(invoices.id, invoice.id), eq(invoices.orgId, invoice.orgId)));
+
+    return {
+      skipped: false as const,
+      ...result,
+    };
+  }
+
   // --- WhatsApp path (default) ---
   const tpl = await db.query.messageTemplates.findFirst({
     where: (t, { and, eq }) =>
@@ -209,7 +250,7 @@ export async function sendReminderForInvoice(input: {
 export async function sendReceiptConfirmation(input: {
   orgId: string;
   invoiceId: string;
-  channel?: "WHATSAPP" | "EMAIL";
+  channel?: "WHATSAPP" | "EMAIL" | "SMS";
 }) {
   return sendReminderForInvoice({
     orgId: input.orgId,

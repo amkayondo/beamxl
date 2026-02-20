@@ -117,3 +117,57 @@ export async function createPlatformSubscriptionCheckoutSession(input: {
     cancel_url: `${appUrl}/${input.orgSlug}/settings/billing?canceled=1`,
   });
 }
+
+export async function createPlatformTopupCheckoutSession(input: {
+  orgId: string;
+  orgSlug: string;
+  customerId: string;
+  topupId: string;
+  packCode: string;
+  priceMinor: number;
+  currency: string;
+  smsCredits: number;
+  emailCredits: number;
+  voiceSeconds: number;
+  whatsappCredits: number;
+}) {
+  const client = requireStripeClient();
+  const appUrl = getAppUrl();
+
+  return client.checkout.sessions.create({
+    mode: "payment",
+    customer: input.customerId,
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: input.currency.toLowerCase(),
+          unit_amount: input.priceMinor,
+          product_data: {
+            name: `DueFlow ${input.packCode} Credit Top-up`,
+          },
+        },
+      },
+    ],
+    metadata: {
+      orgId: input.orgId,
+      topupId: input.topupId,
+      packCode: input.packCode,
+      smsCredits: String(input.smsCredits),
+      emailCredits: String(input.emailCredits),
+      voiceSeconds: String(input.voiceSeconds),
+      whatsappCredits: String(input.whatsappCredits),
+      checkoutType: "TOPUP",
+    },
+    payment_intent_data: {
+      metadata: {
+        orgId: input.orgId,
+        topupId: input.topupId,
+        checkoutType: "TOPUP",
+      },
+    },
+    client_reference_id: input.orgId,
+    success_url: `${appUrl}/${input.orgSlug}/settings/billing?topup=success`,
+    cancel_url: `${appUrl}/${input.orgSlug}/settings/billing?topup=canceled`,
+  });
+}

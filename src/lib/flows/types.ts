@@ -2,6 +2,13 @@ import type { Edge, Node, Viewport } from "@xyflow/react";
 
 export type FlowStatus = "DRAFT" | "ACTIVE" | "PAUSED";
 export type FlowNodeKind = "trigger" | "switch" | "action-enroll" | "utility-wait";
+export type RuntimeOnlyNodeKind =
+  | "condition"
+  | "action"
+  | "interactive"
+  | "approval"
+  | "exit"
+  | "wait";
 export type FlowRuntimePill = "Completed" | "Running" | "Idle";
 
 export type TriggerType =
@@ -72,7 +79,21 @@ export type WaitNodeData = {
   unit: WaitUnit;
 };
 
-export type FlowNodeData = TriggerNodeData | SwitchNodeData | ActionEnrollNodeData | WaitNodeData;
+export type GenericRuntimeNodeData = {
+  nodeKind: RuntimeOnlyNodeKind;
+  chip?: string;
+  title?: string;
+  subtitle?: string;
+  runtime?: FlowRuntimePill;
+  [key: string]: any;
+};
+
+export type FlowNodeData =
+  | TriggerNodeData
+  | SwitchNodeData
+  | ActionEnrollNodeData
+  | WaitNodeData
+  | GenericRuntimeNodeData;
 export type FlowEdgeData = {
   branchId?: string;
 };

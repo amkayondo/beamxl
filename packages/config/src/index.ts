@@ -1,1 +1,1 @@
-export {};
+export { env } from "../../../src/env";

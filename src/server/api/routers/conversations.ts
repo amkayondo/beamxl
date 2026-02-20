@@ -9,7 +9,7 @@ import {
 import { conversations } from "@/server/db/schema";
 import { writeAuditLog } from "@/server/services/audit.service";
 import {
-  listConversationMessages,
+  listConversationTimeline,
   listConversations,
   sendConversationMessage,
 } from "@/server/services/conversation.service";
@@ -20,6 +20,7 @@ export const conversationsRouter = createTRPCRouter({
       z.object({
         orgId: z.string().min(1),
         status: z.enum(["OPEN", "PENDING", "CLOSED"]).optional(),
+        channel: z.enum(["WHATSAPP", "SMS", "EMAIL", "VOICE"]).optional(),
         page: z.number().int().min(1).default(1),
         pageSize: z.number().int().min(1).max(100).default(20),
       })
@@ -35,6 +36,7 @@ export const conversationsRouter = createTRPCRouter({
         contactId: z.string().min(1),
         invoiceId: z.string().optional(),
         body: z.string().min(1),
+        channel: z.enum(["WHATSAPP", "EMAIL", "SMS"]).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -49,7 +51,7 @@ export const conversationsRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      const items = await listConversationMessages(input);
+      const items = await listConversationTimeline(input);
       return {
         items,
         total: items.length,

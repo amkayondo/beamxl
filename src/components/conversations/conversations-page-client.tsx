@@ -147,34 +147,57 @@ export function ConversationsPageClient({
                 No messages in this thread.
               </p>
             ) : (
-              thread?.items.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "rounded-md border p-3 text-sm",
-                    message.direction === "OUTBOUND"
-                      ? "ml-8 border-zinc-700 bg-zinc-800/50"
-                      : "mr-8 border-zinc-800 bg-zinc-900"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-zinc-300">
-                      {message.direction === "OUTBOUND" ? "You" : "Contact"}
+              thread?.items.map((entry) => {
+                if (entry.type === "CALL") {
+                  const call = entry.item;
+                  return (
+                    <div
+                      key={`call-${call.id}`}
+                      className="rounded-md border border-zinc-700 bg-zinc-900/60 p-3 text-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-zinc-300">Voice Call</p>
+                        <span className="text-xs text-zinc-500">
+                          {new Date(entry.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-zinc-100">
+                        Status: {call.status}
+                        {call.outcome ? ` • Outcome: ${call.outcome}` : ""}
+                      </p>
+                      {call.summary && (
+                        <p className="mt-1 text-xs text-zinc-400">{call.summary}</p>
+                      )}
+                    </div>
+                  );
+                }
+
+                const message = entry.item;
+                return (
+                  <div
+                    key={`msg-${message.id}`}
+                    className={cn(
+                      "rounded-md border p-3 text-sm",
+                      message.direction === "OUTBOUND"
+                        ? "ml-8 border-zinc-700 bg-zinc-800/50"
+                        : "mr-8 border-zinc-800 bg-zinc-900"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-zinc-300">
+                        {message.direction === "OUTBOUND" ? "You" : "Contact"} • {message.channel}
+                      </p>
+                      <span className="text-xs text-zinc-500">
+                        {new Date(entry.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-zinc-100">{message.body}</p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {message.deliveryStatus}
                     </p>
-                    <span className="text-xs text-zinc-500">
-                      {message.sentAt
-                        ? new Date(message.sentAt).toLocaleString()
-                        : message.receivedAt
-                          ? new Date(message.receivedAt).toLocaleString()
-                          : ""}
-                    </span>
                   </div>
-                  <p className="mt-1 text-zinc-100">{message.body}</p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {message.deliveryStatus}
-                  </p>
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>

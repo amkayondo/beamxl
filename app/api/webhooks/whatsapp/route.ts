@@ -80,6 +80,7 @@ export async function POST(request: Request) {
       orgId,
       fromPhone: event.from,
       body: event.body,
+      channel: event.channel,
       providerMessageId: event.providerMessageId,
     });
 

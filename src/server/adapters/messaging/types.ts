@@ -1,7 +1,10 @@
+export type MessageChannel = "WHATSAPP" | "SMS";
+
 export type WhatsAppWebhookEvent =
   | {
       providerEventId: string;
       type: "MESSAGE_INBOUND";
+      channel: MessageChannel;
       from: string;
       body: string;
       providerMessageId?: string;
@@ -9,6 +12,7 @@ export type WhatsAppWebhookEvent =
   | {
       providerEventId: string;
       type: "MESSAGE_STATUS";
+      channel: MessageChannel;
       providerMessageId: string;
       status: "SENT" | "DELIVERED" | "READ" | "FAILED";
     };
@@ -21,6 +25,10 @@ export interface WhatsAppAdapter {
     variables: Record<string, string>;
   }): Promise<{ providerMessageId: string }>;
   sendTextMessage(input: {
+    toE164: string;
+    body: string;
+  }): Promise<{ providerMessageId: string }>;
+  sendSmsMessage(input: {
     toE164: string;
     body: string;
   }): Promise<{ providerMessageId: string }>;

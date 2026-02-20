@@ -10,6 +10,11 @@ import {
   portalPreferences,
 } from "@/server/db/schema";
 import { writeAuditLog } from "@/server/services/audit.service";
+import {
+  createPortalToken,
+  getPortalUrl,
+  hashPortalToken,
+} from "@/server/services/portal-auth.service";
 
 export const portalRouter = createTRPCRouter({
   listAccounts: orgProcedure
@@ -55,6 +60,40 @@ export const portalRouter = createTRPCRouter({
       });
 
       return { accountId };
+    }),
+
+  issueAccessToken: adminProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        portalAccountId: z.string().min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const account = await ctx.db.query.clientPortalAccounts.findFirst({
+        where: (a, { and, eq }) =>
+          and(eq(a.id, input.portalAccountId), eq(a.orgId, input.orgId)),
+      });
+
+      if (!account) {
+        throw new Error("Portal account not found");
+      }
+
+      const token = createPortalToken();
+      const accessTokenHash = hashPortalToken(token);
+
+      await ctx.db
+        .update(clientPortalAccounts)
+        .set({
+          accessTokenHash,
+          isActive: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(clientPortalAccounts.id, account.id));
+
+      return {
+        portalUrl: getPortalUrl(token),
+      };
     }),
 
   updatePreferences: orgProcedure

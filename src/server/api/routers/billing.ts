@@ -13,11 +13,14 @@ import {
   usageCredits,
 } from "@/server/db/schema";
 import {
+  createPlatformTopupCheckoutSession,
   createPlatformSubscriptionCheckoutSession,
   requireStripeClient,
   requireStripeSubscriptionPriceId,
 } from "@/server/stripe";
 import { writeAuditLog } from "@/server/services/audit.service";
+import { settleTopupFromCheckoutSession } from "@/server/services/billing-topup.service";
+import { getTopupPack, TOPUP_PACKS } from "@/server/services/topup-packs";
 
 export const billingRouter = createTRPCRouter({
   catalog: orgProcedure
@@ -31,6 +34,16 @@ export const billingRouter = createTRPCRouter({
         where: (p, { eq }) => eq(p.isActive, true),
         orderBy: (p, { asc }) => [asc(p.monthlyPriceMinor)],
       });
+    }),
+
+  listTopupPacks: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+      })
+    )
+    .query(async () => {
+      return TOPUP_PACKS;
     }),
 
   getState: orgProcedure
@@ -118,7 +131,22 @@ export const billingRouter = createTRPCRouter({
         where: (t, { eq }) => eq(t.orgId, input.orgId),
       });
 
-      if (existing) return existing;
+      if (existing) {
+        if (existing.status === "ACTIVE" && existing.endsAt <= new Date()) {
+          await ctx.db
+            .update(trialState)
+            .set({
+              status: "EXPIRED",
+              updatedAt: new Date(),
+            })
+            .where(eq(trialState.id, existing.id));
+
+          return ctx.db.query.trialState.findFirst({
+            where: (t, { eq }) => eq(t.id, existing.id),
+          });
+        }
+        return existing;
+      }
 
       const now = new Date();
       const endsAt = new Date(now);
@@ -178,9 +206,127 @@ export const billingRouter = createTRPCRouter({
         });
       }
 
+      const now = new Date();
+      const cycleStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+      const usage = await ctx.db.query.usageCredits.findFirst({
+        where: (u, { and, eq }) => and(eq(u.orgId, input.orgId), eq(u.cycleStart, cycleStart)),
+      });
+
+      if (usage) {
+        await ctx.db
+          .update(usageCredits)
+          .set({
+            overageMode: input.mode,
+            overageCapMinor: input.capMinor,
+            updatedAt: new Date(),
+          })
+          .where(eq(usageCredits.id, usage.id));
+      }
+
       return { ok: true };
     }),
 
+  createTopupCheckout: adminProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        packCode: z.enum(["MINI", "BUSINESS", "POWER"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const pack = getTopupPack(input.packCode);
+      if (!pack) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Invalid packCode ${input.packCode}`,
+        });
+      }
+
+      const org = await ctx.db.query.orgs.findFirst({
+        where: (o, { eq }) => eq(o.id, input.orgId),
+      });
+
+      if (!org) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Organization not found" });
+      }
+
+      const stripe = requireStripeClient();
+      let customerId = org.stripeCustomerId;
+
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          name: org.name,
+          metadata: { orgId: org.id },
+        });
+        customerId = customer.id;
+
+        await ctx.db
+          .update(orgs)
+          .set({
+            stripeCustomerId: customerId,
+            stripeSubscriptionUpdatedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(orgs.id, org.id));
+      }
+
+      const id = crypto.randomUUID();
+      await ctx.db.insert(creditTopups).values({
+        id,
+        orgId: input.orgId,
+        packCode: pack.code,
+        smsCredits: pack.smsCredits,
+        emailCredits: pack.emailCredits,
+        voiceSeconds: pack.voiceSeconds,
+        whatsappCredits: pack.whatsappCredits,
+        priceMinor: pack.priceMinor,
+        currency: pack.currency,
+        status: "PENDING",
+      });
+
+      const session = await createPlatformTopupCheckoutSession({
+        orgId: org.id,
+        orgSlug: org.slug,
+        customerId,
+        topupId: id,
+        packCode: pack.code,
+        priceMinor: pack.priceMinor,
+        currency: pack.currency,
+        smsCredits: pack.smsCredits,
+        emailCredits: pack.emailCredits,
+        voiceSeconds: pack.voiceSeconds,
+        whatsappCredits: pack.whatsappCredits,
+      });
+
+      await writeAuditLog({
+        orgId: org.id,
+        actorType: "USER",
+        actorUserId: ctx.session.user.id,
+        action: "TOPUP_CHECKOUT_CREATED",
+        entityType: "CreditTopup",
+        entityId: id,
+        after: {
+          packCode: pack.code,
+          priceMinor: pack.priceMinor,
+          checkoutSessionId: session.id,
+        },
+      });
+
+      if (!session.url) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Stripe did not return a top-up checkout URL",
+        });
+      }
+
+      return {
+        topupId: id,
+        url: session.url,
+      };
+    }),
+
+  // Backward-compatible admin/manual credit grants.
   addTopup: adminProcedure
     .input(
       z.object({
@@ -190,27 +336,31 @@ export const billingRouter = createTRPCRouter({
         emailCredits: z.number().int().min(0).default(0),
         voiceSeconds: z.number().int().min(0).default(0),
         whatsappCredits: z.number().int().min(0).default(0),
-        priceMinor: z.number().int().min(0),
+        priceMinor: z.number().int().min(0).default(0),
         currency: z.string().default("USD"),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const id = crypto.randomUUID();
+      const topupId = crypto.randomUUID();
       await ctx.db.insert(creditTopups).values({
-        id,
+        id: topupId,
         orgId: input.orgId,
-        packCode: input.packCode,
+        packCode: input.packCode.toUpperCase(),
         smsCredits: input.smsCredits,
         emailCredits: input.emailCredits,
         voiceSeconds: input.voiceSeconds,
         whatsappCredits: input.whatsappCredits,
         priceMinor: input.priceMinor,
         currency: input.currency,
-        status: "SUCCEEDED",
-        purchasedAt: new Date(),
+        status: "PENDING",
       });
 
-      return { topupId: id };
+      await settleTopupFromCheckoutSession({
+        orgId: input.orgId,
+        topupId,
+      });
+
+      return { topupId };
     }),
 
   disconnectConnectAccount: adminProcedure
