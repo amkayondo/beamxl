@@ -8,6 +8,7 @@ import {
   agentGoalProgress,
   agentTasks,
   approvalRequests,
+  mobileApprovalActions,
 } from "@/server/db/schema";
 import { runAgentTask } from "@/server/services/ai-runtime.service";
 import { writeAuditLog } from "@/server/services/audit.service";
@@ -156,6 +157,25 @@ export const agentRouter = createTRPCRouter({
       });
     }),
 
+  listApprovalRequests: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        status: z.enum(["RECEIVED", "CONFIRMED", "EXECUTED", "REJECTED", "FAILED"]).optional(),
+        limit: z.number().int().min(1).max(100).default(50),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const items = await ctx.db.query.approvalRequests.findMany({
+        where: (r, { and, eq }) =>
+          and(eq(r.orgId, input.orgId), input.status ? eq(r.status, input.status) : undefined),
+        orderBy: (r, { desc }) => [desc(r.createdAt)],
+        limit: input.limit,
+      });
+
+      return { items };
+    }),
+
   createTask: orgProcedure
     .input(
       z.object({
@@ -215,5 +235,125 @@ export const agentRouter = createTRPCRouter({
         orderBy: (d, { desc }) => [desc(d.createdAt)],
         limit: input.limit,
       });
+    }),
+
+  mobileApprovalAction: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        approvalRequestId: z.string().min(1),
+        action: z.enum(["APPROVE", "DENY", "SNOOZE"]),
+        idempotencyKey: z.string().min(8),
+        note: z.string().max(1_000).optional(),
+        snoozeMinutes: z.number().int().min(5).max(24 * 60).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const approvalRequest = await ctx.db.query.approvalRequests.findFirst({
+        where: (r, { and, eq }) =>
+          and(eq(r.id, input.approvalRequestId), eq(r.orgId, input.orgId)),
+      });
+
+      if (!approvalRequest) {
+        return { ok: false as const, reason: "not_found" as const };
+      }
+
+      const existing = await ctx.db.query.mobileApprovalActions.findFirst({
+        where: (a, { and, eq }) =>
+          and(
+            eq(a.orgId, input.orgId),
+            eq(a.approvalRequestId, input.approvalRequestId),
+            eq(a.idempotencyKey, input.idempotencyKey),
+          ),
+      });
+
+      if (existing) {
+        return {
+          ok: true as const,
+          deduplicated: true as const,
+          approvalRequestId: approvalRequest.id,
+          status: approvalRequest.status,
+        };
+      }
+
+      const now = new Date();
+      const nextExpiresAt =
+        input.action === "SNOOZE"
+          ? new Date(now.getTime() + (input.snoozeMinutes ?? 24 * 60) * 60_000)
+          : approvalRequest.expiresAt;
+
+      await ctx.db.transaction(async (tx) => {
+        await tx.insert(mobileApprovalActions).values({
+          orgId: input.orgId,
+          approvalRequestId: input.approvalRequestId,
+          userId: ctx.session.user.id,
+          idempotencyKey: input.idempotencyKey,
+          action: input.action,
+          note: input.note,
+          snoozeUntil: input.action === "SNOOZE" ? nextExpiresAt : null,
+        });
+
+        if (input.action === "APPROVE") {
+          await tx
+            .update(approvalRequests)
+            .set({
+              status: "EXECUTED",
+              decisionText: input.note ?? "Approved from mobile",
+              decidedAt: now,
+              decidedByUserId: ctx.session.user.id,
+              updatedAt: now,
+            })
+            .where(and(eq(approvalRequests.id, input.approvalRequestId), eq(approvalRequests.orgId, input.orgId)));
+          return;
+        }
+
+        if (input.action === "DENY") {
+          await tx
+            .update(approvalRequests)
+            .set({
+              status: "REJECTED",
+              decisionText: input.note ?? "Denied from mobile",
+              decidedAt: now,
+              decidedByUserId: ctx.session.user.id,
+              updatedAt: now,
+            })
+            .where(and(eq(approvalRequests.id, input.approvalRequestId), eq(approvalRequests.orgId, input.orgId)));
+          return;
+        }
+
+        await tx
+          .update(approvalRequests)
+          .set({
+            status: "CONFIRMED",
+            decisionText: input.note ?? "Snoozed from mobile",
+            expiresAt: nextExpiresAt,
+            decidedAt: null,
+            decidedByUserId: null,
+            updatedAt: now,
+          })
+          .where(and(eq(approvalRequests.id, input.approvalRequestId), eq(approvalRequests.orgId, input.orgId)));
+      });
+
+      await writeAuditLog({
+        orgId: input.orgId,
+        actorType: "USER",
+        actorUserId: ctx.session.user.id,
+        action: "MOBILE_APPROVAL_ACTION",
+        entityType: "ApprovalRequest",
+        entityId: input.approvalRequestId,
+        after: input,
+      });
+
+      return {
+        ok: true as const,
+        deduplicated: false as const,
+        approvalRequestId: input.approvalRequestId,
+        status:
+          input.action === "APPROVE"
+            ? "EXECUTED"
+            : input.action === "DENY"
+              ? "REJECTED"
+              : "CONFIRMED",
+      };
     }),
 });

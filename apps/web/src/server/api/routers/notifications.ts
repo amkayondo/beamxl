@@ -1,8 +1,8 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, orgProcedure } from "@/server/api/trpc";
-import { notifications } from "@/server/db/schema";
+import { mobileDeviceTokens, notifications } from "@/server/db/schema";
 import {
   getUnreadCount,
   markAllRead as markAllReadService,
@@ -82,5 +82,91 @@ export const notificationsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await markAllReadService(ctx.session.user.id, input.orgId);
       return { success: true };
+    }),
+
+  registerDeviceToken: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        deviceId: z.string().min(1),
+        expoPushToken: z.string().min(1),
+        platform: z.enum(["IOS", "ANDROID"]),
+        appVersion: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+
+      await ctx.db
+        .insert(mobileDeviceTokens)
+        .values({
+          orgId: input.orgId,
+          userId: ctx.session.user.id,
+          deviceId: input.deviceId,
+          expoPushToken: input.expoPushToken,
+          platform: input.platform,
+          appVersion: input.appVersion,
+          isActive: true,
+          lastSeenAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: mobileDeviceTokens.expoPushToken,
+          set: {
+            orgId: input.orgId,
+            userId: ctx.session.user.id,
+            deviceId: input.deviceId,
+            platform: input.platform,
+            appVersion: input.appVersion,
+            isActive: true,
+            lastSeenAt: now,
+            updatedAt: now,
+          },
+        });
+
+      return { success: true };
+    }),
+
+  unregisterDeviceToken: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        expoPushToken: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(mobileDeviceTokens)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(mobileDeviceTokens.orgId, input.orgId),
+            eq(mobileDeviceTokens.userId, ctx.session.user.id),
+            eq(mobileDeviceTokens.expoPushToken, input.expoPushToken),
+          ),
+        );
+
+      return { success: true };
+    }),
+
+  listDeviceTokens: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db.query.mobileDeviceTokens.findMany({
+        where: (d, { and, eq }) =>
+          and(eq(d.orgId, input.orgId), eq(d.userId, ctx.session.user.id)),
+        orderBy: (d, { desc }) => [desc(d.lastSeenAt), desc(d.createdAt)],
+      });
+
+      return {
+        items: rows,
+      };
     }),
 });

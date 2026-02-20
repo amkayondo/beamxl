@@ -27,6 +27,7 @@ export const env = createEnv({
     BIRD_API_KEY: z.string().optional(),
     BIRD_WEBHOOK_SECRET: z.string().optional(),
     EXPO_PUSH_ACCESS_TOKEN: z.string().optional(),
+    EXPO_APP_SCHEME: z.string().optional(),
 
     ELEVENLABS_API_KEY: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
@@ -67,6 +68,7 @@ export const env = createEnv({
     BIRD_API_KEY: process.env.BIRD_API_KEY,
     BIRD_WEBHOOK_SECRET: process.env.BIRD_WEBHOOK_SECRET,
     EXPO_PUSH_ACCESS_TOKEN: process.env.EXPO_PUSH_ACCESS_TOKEN,
+    EXPO_APP_SCHEME: process.env.EXPO_APP_SCHEME,
 
     ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,

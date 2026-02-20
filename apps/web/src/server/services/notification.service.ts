@@ -1,7 +1,8 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 
+import { env } from "@/env";
 import { db } from "@/server/db";
-import { notifications, orgMembers } from "@/server/db/schema";
+import { mobileDeviceTokens, notifications, orgMembers } from "@/server/db/schema";
 
 type CreateNotificationPayload = {
   orgId: string;
@@ -20,6 +21,64 @@ type CreateNotificationPayload = {
   metadata?: Record<string, unknown>;
 };
 
+type PushNotificationPayload = {
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
+};
+
+function normalizeExpoPushToken(token: string) {
+  return token.startsWith("ExponentPushToken[") || token.startsWith("ExpoPushToken[");
+}
+
+async function sendPushToTokens(tokens: string[], payload: PushNotificationPayload) {
+  const validTokens = tokens.filter(normalizeExpoPushToken);
+  if (validTokens.length === 0) return;
+
+  await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(env.EXPO_PUSH_ACCESS_TOKEN
+        ? {
+            Authorization: `Bearer ${env.EXPO_PUSH_ACCESS_TOKEN}`,
+          }
+        : {}),
+    },
+    body: JSON.stringify(
+      validTokens.map((to) => ({
+        to,
+        title: payload.title,
+        body: payload.body,
+        data: payload.data ?? {},
+      }))
+    ),
+  }).catch((error) => {
+    console.error("[notifications] expo push dispatch failed", error);
+  });
+}
+
+async function sendPushNotificationToUser(input: {
+  orgId: string;
+  userId: string;
+  payload: PushNotificationPayload;
+}) {
+  const deviceTokens = await db.query.mobileDeviceTokens.findMany({
+    where: (d, { and, eq }) =>
+      and(eq(d.orgId, input.orgId), eq(d.userId, input.userId), eq(d.isActive, true)),
+    columns: {
+      expoPushToken: true,
+    },
+    limit: 100,
+  });
+
+  await sendPushToTokens(
+    deviceTokens.map((item) => item.expoPushToken),
+    input.payload
+  );
+}
+
 export async function createNotification(payload: CreateNotificationPayload) {
   if (payload.userId) {
     await db.insert(notifications).values({
@@ -30,6 +89,15 @@ export async function createNotification(payload: CreateNotificationPayload) {
       body: payload.body,
       link: payload.link ?? null,
       metadata: payload.metadata ?? null,
+    });
+    await sendPushNotificationToUser({
+      orgId: payload.orgId,
+      userId: payload.userId,
+      payload: {
+        title: payload.title,
+        body: payload.body,
+        data: payload.metadata,
+      },
     });
     return;
   }
@@ -57,6 +125,20 @@ export async function createNotification(payload: CreateNotificationPayload) {
   }));
 
   await db.insert(notifications).values(values);
+
+  await Promise.all(
+    members.map((member) =>
+      sendPushNotificationToUser({
+        orgId: payload.orgId,
+        userId: member.userId,
+        payload: {
+          title: payload.title,
+          body: payload.body,
+          data: payload.metadata,
+        },
+      })
+    )
+  );
 }
 
 export async function getUnreadCount(userId: string, orgId: string) {

@@ -2,9 +2,21 @@
   "name": "@dueflow/extension",
   "private": true,
   "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "dev": "echo 'Chrome extension scaffold ready (implementation pending)'",
-    "build": "echo 'No build configured yet'",
-    "typecheck": "echo 'No typecheck configured yet'"
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dueflow/types": "workspace:*",
+    "@trpc/client": "^11.0.0",
+    "superjson": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.24",
+    "typescript": "^5.8.2",
+    "wxt": "^0.20.10"
   }
 }

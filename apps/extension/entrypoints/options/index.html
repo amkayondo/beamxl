@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DueFlow Extension Settings</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui;
+        background: #0b1324;
+        color: #e8efff;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 36px auto;
+        padding: 16px;
+      }
+      .card {
+        background: #101b32;
+        border: 1px solid #253554;
+        border-radius: 12px;
+        padding: 16px;
+        display: grid;
+        gap: 10px;
+      }
+      label {
+        font-size: 13px;
+        color: #9eb2d4;
+      }
+      input, select, button {
+        border-radius: 8px;
+        border: 1px solid #32496f;
+        background: #13213d;
+        color: #e8efff;
+        padding: 10px;
+      }
+      button {
+        background: #2a73ff;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .hint { color: #8fa4c8; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h2>DueFlow Extension Settings</h2>
+        <label>
+          API Base URL
+          <input id="apiBaseUrl" placeholder="https://app.dueflow.ai" />
+        </label>
+        <label>
+          Organization ID
+          <input id="orgId" placeholder="org_xxx" />
+        </label>
+        <label>
+          Browser
+          <select id="browser">
+            <option value="CHROME">Chrome</option>
+            <option value="EDGE">Edge</option>
+            <option value="BRAVE">Brave</option>
+            <option value="ARC">Arc</option>
+            <option value="OPERA">Opera</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </label>
+        <button id="save">Save</button>
+        <div class="hint" id="status"></div>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

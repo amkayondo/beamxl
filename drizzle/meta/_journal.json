@@ -50,6 +50,13 @@
       "when": 1771556616309,
       "tag": "0006_invoice_domain_parity",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771559011797,
+      "tag": "0007_expo_mobile_extension",
+      "breakpoints": true
     }
   ]
 }

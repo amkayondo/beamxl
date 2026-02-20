@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
+import { expo } from "@better-auth/expo";
 import { Resend } from "resend";
 
 import { env } from "@/env";
@@ -52,12 +53,21 @@ async function bootstrapDefaultOrg(userId: string) {
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_APP_URL,
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"],
+  trustedOrigins: Array.from(
+    new Set(
+      [
+        env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+        "exp://",
+        env.EXPO_APP_SCHEME ? `${env.EXPO_APP_SCHEME}://` : null,
+      ].filter((value): value is string => Boolean(value))
+    )
+  ),
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
   socialProviders,
   plugins: [
+    expo(),
     magicLink({
       expiresIn: 60 * 15,
       sendMagicLink: async ({ email, url }) => {

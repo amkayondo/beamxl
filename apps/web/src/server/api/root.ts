@@ -8,6 +8,7 @@ import { billingRouter } from "@/server/api/routers/billing";
 import { complianceRouter } from "@/server/api/routers/compliance";
 import { contactsRouter } from "@/server/api/routers/contacts";
 import { conversationsRouter } from "@/server/api/routers/conversations";
+import { extensionRouter } from "@/server/api/routers/extension";
 import { flowsRouter } from "@/server/api/routers/flows";
 import { importRouter } from "@/server/api/routers/import";
 import { invoicesRouter } from "@/server/api/routers/invoices";
@@ -33,6 +34,7 @@ export const appRouter = createTRPCRouter({
   portal: portalRouter,
   automation: automationRouter,
   conversations: conversationsRouter,
+  extension: extensionRouter,
   compliance: complianceRouter,
   flows: flowsRouter,
   import: importRouter,
