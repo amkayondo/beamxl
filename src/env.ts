@@ -28,6 +28,9 @@ export const env = createEnv({
     BIRD_WEBHOOK_SECRET: z.string().optional(),
 
     ELEVENLABS_API_KEY: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
+    ANTHROPIC_API_KEY: z.string().optional(),
+    GOOGLE_AI_API_KEY: z.string().optional(),
 
     INTEGRATION_SECRET_STRATEGY: z.enum(["env-ref"]).default("env-ref"),
 
@@ -64,6 +67,9 @@ export const env = createEnv({
     BIRD_WEBHOOK_SECRET: process.env.BIRD_WEBHOOK_SECRET,
 
     ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,

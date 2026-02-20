@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { index, unique, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { createTable } from "./common";
-import { orgMemberStatusEnum, orgRoleEnum } from "./enums";
+import { autopilotModeEnum, orgMemberStatusEnum, orgRoleEnum } from "./enums";
 import { user } from "./users";
 
 export const orgs = createTable(
@@ -16,6 +16,15 @@ export const orgs = createTable(
     name: d.text("name").notNull(),
     defaultCurrency: d.text("default_currency").notNull().default("USD"),
     timezone: d.text("timezone").notNull().default("UTC"),
+    missionBriefing: d
+      .jsonb("mission_briefing")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    autopilotMode: autopilotModeEnum("autopilot_mode")
+      .notNull()
+      .default("GUARDED"),
+    ownerAlertChannel: d.text("owner_alert_channel").notNull().default("EMAIL"),
+    ownerDigestFrequency: d.text("owner_digest_frequency").notNull().default("DAILY"),
     stripeCustomerId: d.text("stripe_customer_id"),
     stripeSubscriptionId: d.text("stripe_subscription_id"),
     stripeSubscriptionStatus: d.text("stripe_subscription_status"),

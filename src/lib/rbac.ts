@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server";
 
-export type OrgRole = "OWNER" | "ADMIN" | "MEMBER";
+export type OrgRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEW_ONLY";
 
 export const roleHierarchy: Record<OrgRole, number> = {
+  VIEW_ONLY: 0,
   MEMBER: 1,
   ADMIN: 2,
   OWNER: 3,

@@ -2,6 +2,18 @@
 
 DueFlow is a multi-tenant payment follow-up automation SaaS built on the T3 stack.
 
+## Monorepo Migration Status
+
+This repository now includes Turborepo workspace scaffolding:
+
+- `apps/web` (migration stub)
+- `apps/worker` (migration stub)
+- `apps/mobile` (React Native scaffold)
+- `apps/extension` (Chrome extension scaffold)
+- `packages/*` shared package placeholders
+
+Current production web and worker runtimes still execute from the root app during migration.
+
 ## Stack
 
 - Next.js App Router
@@ -60,6 +72,10 @@ bun run dev:worker
   - `/api/webhooks/payments`
   - `/api/webhooks/whatsapp`
   - `/api/webhooks/calls`
+- New API domains:
+  - `agent`
+  - `analytics`
+  - `portal`
 - Hourly scheduler endpoint: `/api/cron/hourly`
 
 ## Secrets Strategy

@@ -9,6 +9,11 @@ import {
 import { invoices } from "@/server/db/schema";
 import { writeAuditLog } from "@/server/services/audit.service";
 import { generateInvoiceForPlan } from "@/server/services/invoice.service";
+import {
+  toCanonicalInvoiceStatus,
+  toStoredInvoiceStatus,
+  type InvoiceStatusInput,
+} from "@/server/services/invoice-status.service";
 import { createCheckoutForInvoice } from "@/server/services/payment.service";
 
 function startOfUtcDay(value: string) {
@@ -50,7 +55,20 @@ export const invoicesRouter = createTRPCRouter({
       z.object({
         orgId: z.string().min(1),
         status: z
-          .enum(["DRAFT", "SENT", "DUE", "OVERDUE", "PAID", "FAILED", "CANCELED"])
+          .enum([
+            "DRAFT",
+            "SENT",
+            "VIEWED",
+            "DUE",
+            "OVERDUE",
+            "PARTIAL",
+            "PAID",
+            "FAILED",
+            "CANCELED",
+            "CANCELLED",
+            "WRITTEN_OFF",
+            "IN_DISPUTE",
+          ])
           .optional(),
         dueFrom: z.string().date().optional(),
         dueTo: z.string().date().optional(),
@@ -61,9 +79,11 @@ export const invoicesRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const offset = (input.page - 1) * input.pageSize;
 
+      const storedStatus = input.status ? toStoredInvoiceStatus(input.status) : undefined;
+
       const whereClause = and(
         eq(invoices.orgId, input.orgId),
-        input.status ? eq(invoices.status, input.status) : undefined,
+        storedStatus ? eq(invoices.status, storedStatus) : undefined,
         input.dueFrom ? gte(invoices.dueDate, startOfUtcDay(input.dueFrom)) : undefined,
         input.dueTo ? lte(invoices.dueDate, endOfUtcDay(input.dueTo)) : undefined
       );
@@ -86,7 +106,10 @@ export const invoicesRouter = createTRPCRouter({
       ]);
 
       return {
-        items,
+        items: items.map((item) => ({
+          ...item,
+          status: toCanonicalInvoiceStatus(item.status as InvoiceStatusInput),
+        })),
         total: Number(countRows[0]?.count ?? 0),
       };
     }),
@@ -134,14 +157,16 @@ export const invoicesRouter = createTRPCRouter({
       z.object({
         orgId: z.string().min(1),
         invoiceId: z.string().min(1),
-        status: z.enum(["SENT", "DUE", "OVERDUE", "CANCELED"]),
+        status: z.enum(["SENT", "DUE", "OVERDUE", "CANCELED", "CANCELLED"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const storedStatus = toStoredInvoiceStatus(input.status);
+
       await ctx.db
         .update(invoices)
         .set({
-          status: input.status,
+          status: storedStatus,
           updatedAt: new Date(),
         })
         .where(and(eq(invoices.orgId, input.orgId), eq(invoices.id, input.invoiceId)));
@@ -153,7 +178,7 @@ export const invoicesRouter = createTRPCRouter({
         action: "INVOICE_STATUS_UPDATED",
         entityType: "Invoice",
         entityId: input.invoiceId,
-        after: { status: input.status },
+        after: { status: toCanonicalInvoiceStatus(input.status) },
       });
 
       return { ok: true };

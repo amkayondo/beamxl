@@ -1,6 +1,11 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-export const orgRoleEnum = pgEnum("org_role", ["OWNER", "ADMIN", "MEMBER"]);
+export const orgRoleEnum = pgEnum("org_role", [
+  "OWNER",
+  "ADMIN",
+  "MEMBER",
+  "VIEW_ONLY",
+]);
 export const orgMemberStatusEnum = pgEnum("org_member_status", [
   "INVITED",
   "ACTIVE",
@@ -10,11 +15,16 @@ export const orgMemberStatusEnum = pgEnum("org_member_status", [
 export const invoiceStatusEnum = pgEnum("invoice_status", [
   "DRAFT",
   "SENT",
+  "VIEWED",
   "DUE",
   "OVERDUE",
+  "PARTIAL",
   "PAID",
   "FAILED",
   "CANCELED",
+  "CANCELLED",
+  "WRITTEN_OFF",
+  "IN_DISPUTE",
 ]);
 
 export const paymentStatusEnum = pgEnum("payment_status", [
@@ -161,3 +171,164 @@ export const notificationTypeEnum = pgEnum("notification_type", [
 ]);
 
 export const systemRoleEnum = pgEnum("system_role", ["USER", "ADMIN"]);
+
+export const autopilotModeEnum = pgEnum("autopilot_mode", [
+  "MANUAL",
+  "GUARDED",
+  "FULL",
+]);
+
+export const templateApprovalStatusEnum = pgEnum("template_approval_status", [
+  "DRAFT",
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "LOCKED",
+]);
+
+export const billingChannelEnum = pgEnum("billing_channel", [
+  "SMS",
+  "VOICE",
+  "EMAIL",
+  "WHATSAPP",
+]);
+
+export const subscriptionLifecycleEnum = pgEnum("subscription_lifecycle", [
+  "TRIALING",
+  "ACTIVE",
+  "PAST_DUE",
+  "CANCELED",
+  "INCOMPLETE",
+]);
+
+export const trialLifecycleEnum = pgEnum("trial_lifecycle", [
+  "PENDING",
+  "ACTIVE",
+  "EXPIRED",
+  "CONVERTED",
+  "CANCELED",
+]);
+
+export const overageModeEnum = pgEnum("overage_mode", [
+  "HARD_STOP",
+  "CONTINUE_AND_BILL",
+]);
+
+export const topupStatusEnum = pgEnum("topup_status", [
+  "PENDING",
+  "SUCCEEDED",
+  "FAILED",
+]);
+
+export const workflowStepStatusEnum = pgEnum("workflow_step_status", [
+  "PENDING",
+  "RUNNING",
+  "WAITING_APPROVAL",
+  "COMPLETED",
+  "FAILED",
+  "SKIPPED",
+]);
+
+export const approvalDecisionEnum = pgEnum("approval_decision", [
+  "PENDING",
+  "APPROVED",
+  "DENIED",
+  "SKIPPED",
+  "EXPIRED",
+]);
+
+export const abTestStatusEnum = pgEnum("ab_test_status", [
+  "DRAFT",
+  "RUNNING",
+  "PAUSED",
+  "COMPLETED",
+]);
+
+export const interactiveTypeEnum = pgEnum("interactive_type", [
+  "YES_NO",
+  "MULTIPLE_CHOICE",
+  "NUMERIC_RATING",
+  "OPEN_TEXT",
+  "SCHEDULE_PICKER",
+  "CONSENT_OPT_IN",
+]);
+
+export const interactiveStatusEnum = pgEnum("interactive_status", [
+  "PENDING",
+  "RESPONDED",
+  "TIMED_OUT",
+  "CANCELED",
+]);
+
+export const surveyQuestionTypeEnum = pgEnum("survey_question_type", [
+  "TEXT",
+  "RATING",
+  "MULTIPLE_CHOICE",
+  "YES_NO",
+]);
+
+export const riskLevelEnum = pgEnum("risk_level", [
+  "LOW",
+  "MEDIUM",
+  "HIGH",
+  "CRITICAL",
+]);
+
+export const invoiceHealthEnum = pgEnum("invoice_health", [
+  "HEALTHY",
+  "AT_RISK",
+  "CRITICAL",
+]);
+
+export const disputeStatusEnum = pgEnum("dispute_status", [
+  "OPEN",
+  "UNDER_REVIEW",
+  "RESOLVED",
+  "REJECTED",
+  "CANCELLED",
+]);
+
+export const legalRiskSeverityEnum = pgEnum("legal_risk_severity", [
+  "LOW",
+  "MEDIUM",
+  "HIGH",
+  "CRITICAL",
+]);
+
+export const goalTypeEnum = pgEnum("goal_type", [
+  "MONTHLY_COLLECTION_TARGET",
+  "DSO_TARGET",
+  "RECOVERY_RATE_TARGET",
+  "CLEAR_OVERDUE_BEFORE_DATE",
+]);
+
+export const goalStatusEnum = pgEnum("goal_status", [
+  "ACTIVE",
+  "AT_RISK",
+  "COMPLETED",
+  "PAUSED",
+]);
+
+export const taskStatusEnum = pgEnum("task_status", [
+  "DRAFT",
+  "AWAITING_APPROVAL",
+  "RUNNING",
+  "COMPLETED",
+  "FAILED",
+  "CANCELED",
+]);
+
+export const commandStatusEnum = pgEnum("command_status", [
+  "RECEIVED",
+  "CONFIRMED",
+  "EXECUTED",
+  "REJECTED",
+  "FAILED",
+]);
+
+export const portalRequestStatusEnum = pgEnum("portal_request_status", [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+]);

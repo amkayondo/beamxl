@@ -41,7 +41,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 }
 
 export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ""
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/")

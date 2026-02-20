@@ -3,7 +3,15 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, adminProcedure, orgProcedure } from "@/server/api/trpc";
-import { orgIntegrations, orgs } from "@/server/db/schema";
+import {
+  creditTopups,
+  orgIntegrations,
+  orgs,
+  overageCaps,
+  planCatalog,
+  trialState,
+  usageCredits,
+} from "@/server/db/schema";
 import {
   createPlatformSubscriptionCheckoutSession,
   requireStripeClient,
@@ -12,6 +20,19 @@ import {
 import { writeAuditLog } from "@/server/services/audit.service";
 
 export const billingRouter = createTRPCRouter({
+  catalog: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+      })
+    )
+    .query(async ({ ctx }) => {
+      return ctx.db.query.planCatalog.findMany({
+        where: (p, { eq }) => eq(p.isActive, true),
+        orderBy: (p, { asc }) => [asc(p.monthlyPriceMinor)],
+      });
+    }),
+
   getState: orgProcedure
     .input(
       z.object({
@@ -47,6 +68,149 @@ export const billingRouter = createTRPCRouter({
           stripeSubscriptionUpdatedAt: org.stripeSubscriptionUpdatedAt,
         },
       };
+    }),
+
+  usageMeter: orgProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const cycleStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      const cycleEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59));
+
+      const existing = await ctx.db.query.usageCredits.findFirst({
+        where: (u, { and, eq }) => and(eq(u.orgId, input.orgId), eq(u.cycleStart, cycleStart)),
+      });
+
+      if (existing) {
+        return existing;
+      }
+
+      const insertedId = crypto.randomUUID();
+      await ctx.db.insert(usageCredits).values({
+        id: insertedId,
+        orgId: input.orgId,
+        cycleStart,
+        cycleEnd,
+      });
+
+      const inserted = await ctx.db.query.usageCredits.findFirst({
+        where: (u, { eq }) => eq(u.id, insertedId),
+      });
+
+      if (!inserted) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Unable to initialize usage meter",
+        });
+      }
+
+      return inserted;
+    }),
+
+  trialState: orgProcedure
+    .input(z.object({ orgId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.trialState.findFirst({
+        where: (t, { eq }) => eq(t.orgId, input.orgId),
+      });
+
+      if (existing) return existing;
+
+      const now = new Date();
+      const endsAt = new Date(now);
+      endsAt.setDate(endsAt.getDate() + 14);
+
+      const id = crypto.randomUUID();
+      await ctx.db.insert(trialState).values({
+        id,
+        orgId: input.orgId,
+        status: "ACTIVE",
+        startsAt: now,
+        endsAt,
+        requiresCardAt: endsAt,
+      });
+
+      return ctx.db.query.trialState.findFirst({
+        where: (t, { eq }) => eq(t.id, id),
+      });
+    }),
+
+  setOveragePolicy: adminProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        mode: z.enum(["HARD_STOP", "CONTINUE_AND_BILL"]),
+        capMinor: z.number().int().min(0),
+        threshold10Enabled: z.boolean().default(true),
+        threshold25Enabled: z.boolean().default(true),
+        threshold50Enabled: z.boolean().default(true),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.overageCaps.findFirst({
+        where: (o, { eq }) => eq(o.orgId, input.orgId),
+      });
+
+      if (existing) {
+        await ctx.db
+          .update(overageCaps)
+          .set({
+            mode: input.mode,
+            capMinor: input.capMinor,
+            threshold10Enabled: input.threshold10Enabled,
+            threshold25Enabled: input.threshold25Enabled,
+            threshold50Enabled: input.threshold50Enabled,
+            updatedAt: new Date(),
+          })
+          .where(eq(overageCaps.id, existing.id));
+      } else {
+        await ctx.db.insert(overageCaps).values({
+          orgId: input.orgId,
+          mode: input.mode,
+          capMinor: input.capMinor,
+          threshold10Enabled: input.threshold10Enabled,
+          threshold25Enabled: input.threshold25Enabled,
+          threshold50Enabled: input.threshold50Enabled,
+        });
+      }
+
+      return { ok: true };
+    }),
+
+  addTopup: adminProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        packCode: z.string().min(1),
+        smsCredits: z.number().int().min(0).default(0),
+        emailCredits: z.number().int().min(0).default(0),
+        voiceSeconds: z.number().int().min(0).default(0),
+        whatsappCredits: z.number().int().min(0).default(0),
+        priceMinor: z.number().int().min(0),
+        currency: z.string().default("USD"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const id = crypto.randomUUID();
+      await ctx.db.insert(creditTopups).values({
+        id,
+        orgId: input.orgId,
+        packCode: input.packCode,
+        smsCredits: input.smsCredits,
+        emailCredits: input.emailCredits,
+        voiceSeconds: input.voiceSeconds,
+        whatsappCredits: input.whatsappCredits,
+        priceMinor: input.priceMinor,
+        currency: input.currency,
+        status: "SUCCEEDED",
+        purchasedAt: new Date(),
+      });
+
+      return { topupId: id };
     }),
 
   disconnectConnectAccount: adminProcedure

@@ -1,0 +1,10 @@
+{
+  "name": "@dueflow/web",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo 'Web workspace reserved; root Next.js app migration pending'",
+    "build": "echo 'Web workspace build pending migration'",
+    "typecheck": "echo 'Web workspace typecheck pending migration'"
+  }
+}

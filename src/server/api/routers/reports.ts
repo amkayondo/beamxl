@@ -6,6 +6,7 @@ import {
   orgProcedure,
 } from "@/server/api/trpc";
 import { invoices } from "@/server/db/schema";
+import { toStoredInvoiceStatus } from "@/server/services/invoice-status.service";
 
 function startOfUtcDay(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -34,11 +35,11 @@ export const reportsRouter = createTRPCRouter({
       const dsoResult = await ctx.db.execute(sql`
         SELECT
           COALESCE(SUM(amount_due_minor - amount_paid_minor) FILTER (
-            WHERE status NOT IN ('PAID', 'CANCELED', 'DRAFT')
+            WHERE status NOT IN ('PAID', 'CANCELED', 'CANCELLED', 'DRAFT')
           ), 0)::bigint AS total_ar,
           COALESCE(SUM(amount_due_minor) FILTER (
             WHERE created_at >= NOW() - INTERVAL '90 days'
-              AND status NOT IN ('CANCELED', 'DRAFT')
+              AND status NOT IN ('CANCELED', 'CANCELLED', 'DRAFT')
           ), 0)::bigint AS total_sales_90d
         FROM beamflow_invoices
         WHERE org_id = ${orgId}
@@ -68,7 +69,7 @@ export const reportsRouter = createTRPCRouter({
           ), 0)::bigint AS days_90_plus
         FROM beamflow_invoices
         WHERE org_id = ${orgId}
-          AND status NOT IN ('PAID', 'CANCELED', 'DRAFT')
+          AND status NOT IN ('PAID', 'CANCELED', 'CANCELLED', 'DRAFT')
           AND deleted_at IS NULL
       `);
       const agingRow = (agingResult[0] ?? {}) as Record<string, unknown>;
@@ -179,7 +180,7 @@ export const reportsRouter = createTRPCRouter({
         FROM beamflow_invoices
         WHERE org_id = ${orgId}
           AND deleted_at IS NULL
-          AND status NOT IN ('DRAFT', 'CANCELED')
+          AND status NOT IN ('DRAFT', 'CANCELED', 'CANCELLED')
       `);
       const countRow = (countResult[0] ?? {}) as Record<string, unknown>;
       const invoiceCount = {
@@ -208,14 +209,29 @@ export const reportsRouter = createTRPCRouter({
         dueFrom: z.string().date().optional(),
         dueTo: z.string().date().optional(),
         status: z
-          .enum(["DRAFT", "SENT", "DUE", "OVERDUE", "PAID", "FAILED", "CANCELED"])
+          .enum([
+            "DRAFT",
+            "SENT",
+            "VIEWED",
+            "DUE",
+            "OVERDUE",
+            "PARTIAL",
+            "PAID",
+            "FAILED",
+            "CANCELED",
+            "CANCELLED",
+            "WRITTEN_OFF",
+            "IN_DISPUTE",
+          ])
           .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const storedStatus = input.status ? toStoredInvoiceStatus(input.status) : undefined;
+
       const whereClause = and(
         eq(invoices.orgId, input.orgId),
-        input.status ? eq(invoices.status, input.status) : undefined,
+        storedStatus ? eq(invoices.status, storedStatus) : undefined,
         input.dueFrom ? gte(invoices.dueDate, startOfUtcDay(input.dueFrom)) : undefined,
         input.dueTo ? lte(invoices.dueDate, endOfUtcDay(input.dueTo)) : undefined
       );

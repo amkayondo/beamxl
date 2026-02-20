@@ -1,0 +1,10 @@
+{
+  "name": "@dueflow/worker",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "bun run ../../src/worker/index.ts",
+    "build": "echo 'Worker build pipeline pending extraction'",
+    "typecheck": "echo 'Worker typecheck pending extraction'"
+  }
+}

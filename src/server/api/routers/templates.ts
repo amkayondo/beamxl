@@ -63,6 +63,9 @@ export const templatesRouter = createTRPCRouter({
         key: z.string().min(1),
         language: z.enum(["EN", "RW", "LG"]).default("EN"),
         body: z.string().min(1),
+        subject: z.string().optional(),
+        htmlBody: z.string().optional(),
+        channel: z.enum(["WHATSAPP", "VOICE", "EMAIL", "SMS"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -74,8 +77,12 @@ export const templatesRouter = createTRPCRouter({
         key: input.key,
         language: input.language,
         body: input.body,
+        subject: input.subject ?? null,
+        htmlBody: input.htmlBody ?? null,
+        channel: input.channel,
         version: 1,
         isActive: true,
+        approvalStatus: "DRAFT",
       });
 
       await writeAuditLog({
@@ -97,7 +104,15 @@ export const templatesRouter = createTRPCRouter({
         orgId: z.string().min(1),
         templateId: z.string().min(1),
         body: z.string().min(1).optional(),
+        subject: z.string().optional(),
+        htmlBody: z.string().optional(),
+        channel: z.enum(["WHATSAPP", "VOICE", "EMAIL", "SMS"]).optional(),
         isActive: z.boolean().optional(),
+        approvalStatus: z
+          .enum(["DRAFT", "PENDING", "APPROVED", "REJECTED", "LOCKED"])
+          .optional(),
+        complianceLocked: z.boolean().optional(),
+        rejectionReason: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -105,7 +120,17 @@ export const templatesRouter = createTRPCRouter({
         .update(messageTemplates)
         .set({
           body: input.body,
+          subject: input.subject,
+          htmlBody: input.htmlBody,
+          channel: input.channel,
           isActive: input.isActive,
+          approvalStatus: input.approvalStatus,
+          complianceLocked: input.complianceLocked,
+          rejectionReason: input.rejectionReason,
+          approvedAt:
+            input.approvalStatus === "APPROVED" ? new Date() : undefined,
+          approvedByUserId:
+            input.approvalStatus === "APPROVED" ? ctx.session.user.id : undefined,
           updatedAt: new Date(),
         })
         .where(
@@ -122,7 +147,14 @@ export const templatesRouter = createTRPCRouter({
         action: "TEMPLATE_UPDATED",
         entityType: "MessageTemplate",
         entityId: input.templateId,
-        after: { body: input.body, isActive: input.isActive },
+        after: {
+          body: input.body,
+          subject: input.subject,
+          channel: input.channel,
+          isActive: input.isActive,
+          approvalStatus: input.approvalStatus,
+          complianceLocked: input.complianceLocked,
+        },
       });
 
       return { ok: true };

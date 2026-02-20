@@ -1,9 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
+import { birdCallAdapter } from "@/server/adapters/calls/bird.adapter";
 import { db } from "@/server/db";
 import { callLogs, webhookEvents } from "@/server/db/schema";
-import { twilioCallAdapter } from "@/server/adapters/calls/twilio.adapter";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing org context" }, { status: 400 });
   }
 
-  const signatureVerified = await twilioCallAdapter.verifyWebhook({
+  const signatureVerified = await birdCallAdapter.verifyWebhook({
     rawBody,
     signature,
     headers: request.headers,
@@ -26,12 +26,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const event = await twilioCallAdapter.parseWebhook({ rawBody });
+  const event = await birdCallAdapter.parseWebhook({ rawBody });
 
   try {
     await db.insert(webhookEvents).values({
-      provider: twilioCallAdapter.provider,
-      eventId: `${twilioCallAdapter.provider}:${event.providerEventId}`,
+      provider: birdCallAdapter.provider,
+      eventId: `${birdCallAdapter.provider}:${event.providerEventId}`,
       eventType: "CALL_STATUS",
       providerEventId: event.providerEventId,
       orgId,
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     })
     .where(
       and(
-        eq(webhookEvents.provider, twilioCallAdapter.provider),
+        eq(webhookEvents.provider, birdCallAdapter.provider),
         eq(webhookEvents.providerEventId, event.providerEventId)
       )
     );

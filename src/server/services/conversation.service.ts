@@ -5,6 +5,7 @@ import { contacts, conversations, messageLogs } from "@/server/db/schema";
 import { birdWhatsAppAdapter } from "@/server/adapters/messaging/bird.adapter";
 import { resendEmailAdapter } from "@/server/adapters/messaging/resend-email.adapter";
 import { checkComplianceForOutbound } from "@/server/services/compliance.service";
+import { enforceAndRecordUsage } from "@/server/services/usage-credits.service";
 
 async function ensureConversation(input: {
   orgId: string;
@@ -72,6 +73,12 @@ export async function sendConversationMessage(input: {
       `Compliance blocked: ${compliance.reason ?? "Message not allowed"}`,
     );
   }
+
+  await enforceAndRecordUsage({
+    orgId: input.orgId,
+    channel: channel === "EMAIL" ? "EMAIL" : "WHATSAPP",
+    units: 1,
+  });
 
   const conversation = await ensureConversation({
     orgId: input.orgId,

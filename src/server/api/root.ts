@@ -1,4 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { agentRouter } from "@/server/api/routers/agent";
+import { analyticsRouter } from "@/server/api/routers/analytics";
 import { auditRouter } from "@/server/api/routers/audit";
 import { automationRouter } from "@/server/api/routers/automation";
 import { callsRouter } from "@/server/api/routers/calls";
@@ -12,6 +14,7 @@ import { invoicesRouter } from "@/server/api/routers/invoices";
 import { orgRouter } from "@/server/api/routers/org";
 import { paymentPlansRouter } from "@/server/api/routers/paymentPlans";
 import { paymentsRouter } from "@/server/api/routers/payments";
+import { portalRouter } from "@/server/api/routers/portal";
 import { reportsRouter } from "@/server/api/routers/reports";
 import { settingsRouter } from "@/server/api/routers/settings";
 import { tagsRouter } from "@/server/api/routers/tags";
@@ -20,11 +23,14 @@ import { templatesRouter } from "@/server/api/routers/templates";
 import { systemAdminRouter } from "@/server/api/routers/system-admin";
 
 export const appRouter = createTRPCRouter({
+  agent: agentRouter,
+  analytics: analyticsRouter,
   org: orgRouter,
   contacts: contactsRouter,
   paymentPlans: paymentPlansRouter,
   invoices: invoicesRouter,
   payments: paymentsRouter,
+  portal: portalRouter,
   automation: automationRouter,
   conversations: conversationsRouter,
   compliance: complianceRouter,

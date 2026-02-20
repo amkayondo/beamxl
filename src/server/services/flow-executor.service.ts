@@ -1,5 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 
+import { parseRuntimeFlowGraph } from "@/lib/flows/runtime-schema";
 import { db } from "@/server/db";
 import { flowRuns, flows } from "@/server/db/schema";
 import type {
@@ -226,8 +227,12 @@ export async function executeFlowById(input: {
     ];
   }
 
-  const nodes = (flow.nodesJson ?? []) as FlowNode[];
-  const edges = (flow.edgesJson ?? []) as FlowEdge[];
+  const parsedGraph = parseRuntimeFlowGraph({
+    nodes: flow.nodesJson ?? [],
+    edges: flow.edgesJson ?? [],
+  });
+  const nodes = parsedGraph.nodes;
+  const edges = parsedGraph.edges;
   const log: FlowStepLog[] = [];
 
   // Find trigger nodes
@@ -277,8 +282,12 @@ export async function executeFlowsForEvent(
   const runIds: string[] = [];
 
   for (const flow of activeFlows) {
-    const nodes = (flow.nodesJson ?? []) as FlowNode[];
-    const edges = (flow.edgesJson ?? []) as FlowEdge[];
+    const parsedGraph = parseRuntimeFlowGraph({
+      nodes: flow.nodesJson ?? [],
+      edges: flow.edgesJson ?? [],
+    });
+    const nodes = parsedGraph.nodes;
+    const edges = parsedGraph.edges;
 
     // Check if any trigger in this flow matches the event
     const hasTrigger = nodes.some((n) => {

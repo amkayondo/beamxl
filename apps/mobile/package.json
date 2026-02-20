@@ -1,0 +1,10 @@
+{
+  "name": "@dueflow/mobile",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo 'Mobile app scaffold ready (React Native implementation pending)'",
+    "build": "echo 'No build configured yet'",
+    "typecheck": "echo 'No typecheck configured yet'"
+  }
+}

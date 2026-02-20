@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/server/db";
 import { invoices, messageLogs, messageTemplates } from "@/server/db/schema";
@@ -54,7 +54,14 @@ export async function sendReminderForInvoice(input: {
 
   if (!invoice) throw new Error("Invoice not found");
 
-  if (invoice.status === "PAID" || invoice.status === "CANCELED" || invoice.status === "FAILED") {
+  if (
+    invoice.status === "PAID" ||
+    invoice.status === "CANCELED" ||
+    invoice.status === "CANCELLED" ||
+    invoice.status === "FAILED" ||
+    invoice.status === "WRITTEN_OFF" ||
+    invoice.status === "IN_DISPUTE"
+  ) {
     return { skipped: true as const, reason: "Invoice not actionable" };
   }
 
@@ -91,6 +98,8 @@ export async function sendReminderForInvoice(input: {
           eq(t.orgId, input.orgId),
           eq(t.key, input.templateKey),
           eq(t.channel, "EMAIL"),
+          eq(t.complianceLocked, false),
+          inArray(t.approvalStatus, ["APPROVED", "DRAFT"]),
           eq(t.isActive, true),
         ),
       orderBy: (t, { desc }) => [desc(t.version)],
@@ -103,6 +112,8 @@ export async function sendReminderForInvoice(input: {
             and(
               eq(t.orgId, input.orgId),
               eq(t.key, input.templateKey),
+              eq(t.complianceLocked, false),
+              inArray(t.approvalStatus, ["APPROVED", "DRAFT"]),
               eq(t.isActive, true),
             ),
           orderBy: (t, { desc }) => [desc(t.version)],
@@ -162,6 +173,8 @@ export async function sendReminderForInvoice(input: {
       and(
         eq(t.orgId, input.orgId),
         eq(t.key, input.templateKey),
+        eq(t.complianceLocked, false),
+        inArray(t.approvalStatus, ["APPROVED", "DRAFT"]),
         eq(t.isActive, true)
       ),
     orderBy: (t, { desc }) => [desc(t.version)],

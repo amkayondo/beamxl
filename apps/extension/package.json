@@ -1,0 +1,10 @@
+{
+  "name": "@dueflow/extension",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo 'Chrome extension scaffold ready (implementation pending)'",
+    "build": "echo 'No build configured yet'",
+    "typecheck": "echo 'No typecheck configured yet'"
+  }
+}

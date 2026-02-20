@@ -15,7 +15,7 @@ const navItems = [
 ];
 
 export function AdminSidebar({ active }: { active?: string }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   function isActive(href: string) {
     if (active) {
