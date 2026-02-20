@@ -3,4 +3,4 @@ export {
   getContactComplianceStatus,
   recordConsent,
   revokeAllConsent,
-} from "../../../src/server/services/compliance.service";
+} from "../../../apps/web/src/server/services/compliance.service";

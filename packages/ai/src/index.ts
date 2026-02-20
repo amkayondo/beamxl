@@ -1,1 +1,1 @@
-export { runAgentTask } from "../../../src/server/services/ai-runtime.service";
+export { runAgentTask } from "../../../apps/web/src/server/services/ai-runtime.service";

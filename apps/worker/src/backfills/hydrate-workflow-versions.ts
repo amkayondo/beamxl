@@ -1,12 +1,12 @@
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
-import { db } from "../../../../src/server/db";
+import { db } from "@dueflow/db";
 import {
   flows,
   workflowEdges,
   workflowNodes,
   workflowVersions,
-} from "../../../../src/server/db/schema";
+} from "@dueflow/db";
 
 type LegacyNode = {
   id: string;

@@ -16,7 +16,7 @@ export type StripeOAuthStatePayload = {
 };
 
 function getSigningSecret() {
-  const secret = env.BETTER_AUTH_SECRET;
+  const secret = process.env.BETTER_AUTH_SECRET ?? env.BETTER_AUTH_SECRET;
   if (!secret) {
     throw new Error("BETTER_AUTH_SECRET is required for Stripe OAuth state");
   }

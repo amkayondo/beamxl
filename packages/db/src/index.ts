@@ -1,2 +1,2 @@
-export { db } from "../../../src/server/db";
-export * from "../../../src/server/db/schema";
+export { db } from "../../../apps/web/src/server/db";
+export * from "../../../apps/web/src/server/db/schema";

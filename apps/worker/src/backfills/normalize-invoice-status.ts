@@ -1,7 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 
-import { db } from "../../../../src/server/db";
-import { invoices } from "../../../../src/server/db/schema";
+import { db, invoices } from "@dueflow/db";
 
 async function main() {
   const before = await db

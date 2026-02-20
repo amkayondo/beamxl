@@ -22,20 +22,20 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
-    "plugins": [{ "name": "next" }],
     "incremental": true,
 
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*", "./app/*"]
+      "@/*": ["./apps/web/src/*", "./apps/web/app/*"]
     }
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "packages/**/*.ts",
+    "tests/**/*.ts",
+    "drizzle.config.ts"
   ],
-  "exclude": ["node_modules", "generated"]
+  "exclude": ["node_modules", "generated", "apps/web/.next"]
 }

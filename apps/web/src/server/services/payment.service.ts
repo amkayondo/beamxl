@@ -1,13 +1,75 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 
 import { db } from "@/server/db";
 import { invoices, payments } from "@/server/db/schema";
+import { computeOutstandingMinor, markInvoicePaid } from "@/server/services/invoice.service";
 import { createConnectedInvoiceCheckoutSession } from "@/server/stripe";
+
+export function resolveCheckoutAmountPolicy(input: {
+  invoice: typeof invoices.$inferSelect;
+  requestedAmountMinor?: number;
+  now?: Date;
+}) {
+  const now = input.now ?? new Date();
+  const invoice = input.invoice;
+  const outstandingAmount = computeOutstandingMinor(invoice);
+
+  if (outstandingAmount <= 0) {
+    throw new Error("Invoice is already fully paid");
+  }
+
+  if (
+    invoice.paymentLinkExpiresAt &&
+    now.getTime() > invoice.paymentLinkExpiresAt.getTime()
+  ) {
+    throw new Error("Payment link has expired");
+  }
+
+  if (input.requestedAmountMinor !== undefined) {
+    const requested = Math.max(0, input.requestedAmountMinor);
+
+    if (requested <= 0) {
+      throw new Error("Checkout amount must be positive");
+    }
+
+    if (requested > outstandingAmount) {
+      throw new Error("Checkout amount exceeds outstanding balance");
+    }
+
+    if (!invoice.allowPartialPayments && requested < outstandingAmount) {
+      throw new Error("Partial payments are disabled for this invoice");
+    }
+
+    if (invoice.allowPartialPayments && requested < invoice.minimumPartialAmountMinor) {
+      throw new Error("Checkout amount is below minimum partial payment");
+    }
+
+    return requested;
+  }
+
+  const discountEligible =
+    invoice.earlyDiscountPercent > 0 &&
+    invoice.earlyDiscountExpiresAt !== null &&
+    now.getTime() <= invoice.earlyDiscountExpiresAt.getTime() &&
+    invoice.amountPaidMinor === 0 &&
+    invoice.discountAppliedMinor === 0;
+
+  if (discountEligible) {
+    const discountedAmount = Math.max(
+      0,
+      invoice.amountDueMinor - Math.round((invoice.amountDueMinor * invoice.earlyDiscountPercent) / 100)
+    );
+    return Math.min(outstandingAmount, discountedAmount);
+  }
+
+  return outstandingAmount;
+}
 
 export async function createCheckoutForInvoice(input: {
   orgId: string;
   invoiceId: string;
   returnUrl?: string;
+  amountMinor?: number;
 }) {
   const [invoice, stripeIntegration] = await Promise.all([
     db.query.invoices.findFirst({
@@ -32,16 +94,16 @@ export async function createCheckoutForInvoice(input: {
     throw new Error("Stripe is not connected for this organization");
   }
 
-  const outstandingAmount = invoice.amountDueMinor - invoice.amountPaidMinor;
-  if (outstandingAmount <= 0) {
-    throw new Error("Invoice is already fully paid");
-  }
+  const chargeAmountMinor = resolveCheckoutAmountPolicy({
+    invoice,
+    requestedAmountMinor: input.amountMinor,
+  });
 
   const session = await createConnectedInvoiceCheckoutSession({
     connectedAccountId: stripeIntegration.stripeAccountId,
     invoiceId: invoice.id,
     orgId: invoice.orgId,
-    amountMinor: outstandingAmount,
+    amountMinor: chargeAmountMinor,
     currency: invoice.currency,
     lineItemName: `Invoice ${invoice.invoiceNumber}`,
   });
@@ -58,16 +120,19 @@ export async function createCheckoutForInvoice(input: {
     })
     .where(and(eq(invoices.id, invoice.id), eq(invoices.orgId, invoice.orgId)));
 
-  await db.insert(payments).values({
-    orgId: input.orgId,
-    invoiceId: invoice.id,
-    provider: "STRIPE",
-    providerPaymentId: session.id,
-    providerIntentId,
-    amountMinor: outstandingAmount,
-    currency: invoice.currency,
-    status: "INITIATED",
-  }).onConflictDoNothing({ target: payments.providerPaymentId });
+  await db
+    .insert(payments)
+    .values({
+      orgId: input.orgId,
+      invoiceId: invoice.id,
+      provider: "STRIPE",
+      providerPaymentId: session.id,
+      providerIntentId,
+      amountMinor: chargeAmountMinor,
+      currency: invoice.currency,
+      status: "INITIATED",
+    })
+    .onConflictDoNothing({ target: payments.providerPaymentId });
 
   if (!session.url) {
     throw new Error("Stripe checkout session URL is missing");
@@ -76,6 +141,7 @@ export async function createCheckoutForInvoice(input: {
   return {
     checkoutUrl: session.url,
     providerIntentId: providerIntentId ?? session.id,
+    amountMinor: chargeAmountMinor,
     expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
   };
 }
@@ -100,7 +166,7 @@ export async function recordPaymentFromWebhook(input: {
     throw new Error("Invoice not found");
   }
 
-  const paymentAmount = input.amountMinor ?? invoice.amountDueMinor;
+  const paymentAmount = input.amountMinor ?? Math.max(0, computeOutstandingMinor(invoice));
   const now = new Date();
 
   const existingPayment =
@@ -159,7 +225,7 @@ export async function recordPaymentFromWebhook(input: {
       .onConflictDoNothing({ target: payments.providerPaymentId });
   }
 
-  const nextInvoicePatch: Partial<typeof invoices.$inferInsert> = {
+  const basePatch: Partial<typeof invoices.$inferInsert> = {
     updatedAt: now,
     stripeCheckoutSessionId: input.providerPaymentId?.startsWith("cs_")
       ? input.providerPaymentId
@@ -168,17 +234,32 @@ export async function recordPaymentFromWebhook(input: {
   };
 
   if (input.status === "SUCCEEDED") {
-    nextInvoicePatch.status = "PAID";
-    nextInvoicePatch.amountPaidMinor = invoice.amountDueMinor;
-    nextInvoicePatch.paidAt = now;
+    await markInvoicePaid({
+      orgId: input.orgId,
+      invoiceId: input.invoiceId,
+      amountMinor: paymentAmount,
+    });
+
+    await db
+      .update(invoices)
+      .set(basePatch)
+      .where(and(eq(invoices.id, invoice.id), eq(invoices.orgId, invoice.orgId)));
+    return;
   }
 
   if (input.status === "FAILED") {
-    nextInvoicePatch.status = "FAILED";
+    await db
+      .update(invoices)
+      .set({
+        ...basePatch,
+        status: invoice.amountPaidMinor > 0 ? "PARTIAL" : "FAILED",
+      })
+      .where(and(eq(invoices.id, invoice.id), eq(invoices.orgId, invoice.orgId)));
+    return;
   }
 
   await db
     .update(invoices)
-    .set(nextInvoicePatch)
+    .set(basePatch)
     .where(and(eq(invoices.id, invoice.id), eq(invoices.orgId, invoice.orgId)));
 }

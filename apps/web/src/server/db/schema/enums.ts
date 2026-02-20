@@ -27,6 +27,24 @@ export const invoiceStatusEnum = pgEnum("invoice_status", [
   "IN_DISPUTE",
 ]);
 
+export const invoiceBundleStatusEnum = pgEnum("invoice_bundle_status", [
+  "OPEN",
+  "PARTIALLY_PAID",
+  "PAID",
+  "CANCELLED",
+]);
+
+export const recurringFrequencyEnum = pgEnum("recurring_frequency", [
+  "WEEKLY",
+  "MONTHLY",
+]);
+
+export const recurringScheduleStatusEnum = pgEnum("recurring_schedule_status", [
+  "ACTIVE",
+  "PAUSED",
+  "CANCELLED",
+]);
+
 export const paymentStatusEnum = pgEnum("payment_status", [
   "INITIATED",
   "PENDING",
@@ -331,4 +349,43 @@ export const portalRequestStatusEnum = pgEnum("portal_request_status", [
   "APPROVED",
   "REJECTED",
   "CANCELLED",
+]);
+
+export const mobilePlatformEnum = pgEnum("mobile_platform", [
+  "IOS",
+  "ANDROID",
+  "WEB",
+]);
+
+export const extensionBrowserEnum = pgEnum("extension_browser", [
+  "CHROME",
+  "EDGE",
+  "BRAVE",
+  "ARC",
+  "OPERA",
+  "OTHER",
+]);
+
+export const extensionCaptureSourceEnum = pgEnum("extension_capture_source", [
+  "GMAIL",
+  "WEBPAGE",
+  "MANUAL",
+]);
+
+export const extensionCaptureStatusEnum = pgEnum("extension_capture_status", [
+  "DRAFT",
+  "RESOLVED",
+  "APPLIED",
+  "FAILED",
+]);
+
+export const extensionInstallationStatusEnum = pgEnum("extension_installation_status", [
+  "ACTIVE",
+  "DISABLED",
+]);
+
+export const mobileApprovalActionEnum = pgEnum("mobile_approval_action", [
+  "APPROVE",
+  "DENY",
+  "SNOOZE",
 ]);

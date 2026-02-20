@@ -2,18 +2,27 @@ import Stripe from "stripe";
 
 import { env } from "@/env";
 
-export const stripe = env.STRIPE_SECRET_KEY
-  ? new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-02-24.acacia",
-    })
-  : null;
+let stripeClient: Stripe | null = null;
+let stripeClientSecret: string | null = null;
+
+function getStripeSecretKey() {
+  return process.env.STRIPE_SECRET_KEY ?? env.STRIPE_SECRET_KEY ?? null;
+}
 
 export function requireStripeClient() {
-  if (!stripe) {
+  const secret = getStripeSecretKey();
+  if (!secret) {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
 
-  return stripe;
+  if (!stripeClient || stripeClientSecret !== secret) {
+    stripeClient = new Stripe(secret, {
+      apiVersion: "2025-02-24.acacia",
+    });
+    stripeClientSecret = secret;
+  }
+
+  return stripeClient;
 }
 
 export function requireStripeConnectClientId() {

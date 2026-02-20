@@ -37,6 +37,17 @@ function renderTemplate(body: string, vars: Record<string, string>) {
   return Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v), body);
 }
 
+export function isInvoiceActionableForReminder(status: (typeof invoices.$inferSelect)["status"]) {
+  return !(
+    status === "PAID" ||
+    status === "CANCELED" ||
+    status === "CANCELLED" ||
+    status === "FAILED" ||
+    status === "WRITTEN_OFF" ||
+    status === "IN_DISPUTE"
+  );
+}
+
 export async function sendReminderForInvoice(input: {
   orgId: string;
   invoiceId: string;
@@ -54,14 +65,7 @@ export async function sendReminderForInvoice(input: {
 
   if (!invoice) throw new Error("Invoice not found");
 
-  if (
-    invoice.status === "PAID" ||
-    invoice.status === "CANCELED" ||
-    invoice.status === "CANCELLED" ||
-    invoice.status === "FAILED" ||
-    invoice.status === "WRITTEN_OFF" ||
-    invoice.status === "IN_DISPUTE"
-  ) {
+  if (!isInvoiceActionableForReminder(invoice.status)) {
     return { skipped: true as const, reason: "Invoice not actionable" };
   }
 

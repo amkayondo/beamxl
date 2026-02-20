@@ -4,7 +4,12 @@ import { account, session, user } from "./users";
 import { orgMembers, orgs } from "./organizations";
 import { contactTags, contacts, tags } from "./contacts";
 import { paymentPlans } from "./plans";
-import { invoices } from "./invoices";
+import {
+  invoiceBundleItems,
+  invoiceBundles,
+  invoiceRecurringSchedules,
+  invoices,
+} from "./invoices";
 import { payments } from "./payments";
 import { automationRules } from "./automation";
 import { messageTemplates } from "./templates";
@@ -66,6 +71,12 @@ import {
   ownerCommands,
 } from "./agents";
 import {
+  extensionCaptureEvents,
+  extensionInstallations,
+  mobileApprovalActions,
+  mobileDeviceTokens,
+} from "./mobile-extension";
+import {
   clientPortalAccounts,
   clientPortalSessions,
   paymentPlanRequests,
@@ -97,6 +108,10 @@ export const userRelations = relations(user, ({ many }) => ({
   decidedApprovalRequests: many(approvalRequests),
   resolvedPaymentPlanRequests: many(paymentPlanRequests),
   createdSurveys: many(surveys),
+  mobileDeviceTokens: many(mobileDeviceTokens),
+  extensionInstallations: many(extensionInstallations),
+  extensionCaptureEvents: many(extensionCaptureEvents),
+  mobileApprovalActions: many(mobileApprovalActions),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
@@ -128,6 +143,9 @@ export const orgRelations = relations(orgs, ({ one, many }) => ({
   tags: many(tags),
   paymentPlans: many(paymentPlans),
   invoices: many(invoices),
+  invoiceBundles: many(invoiceBundles),
+  invoiceBundleItems: many(invoiceBundleItems),
+  invoiceRecurringSchedules: many(invoiceRecurringSchedules),
   payments: many(payments),
   automationRules: many(automationRules),
   templates: many(messageTemplates),
@@ -198,6 +216,10 @@ export const orgRelations = relations(orgs, ({ one, many }) => ({
   // Phase 2/3 integrations
   integrationConnections: many(integrationConnections),
   integrationSyncJobs: many(integrationSyncJobs),
+  mobileDeviceTokens: many(mobileDeviceTokens),
+  extensionInstallations: many(extensionInstallations),
+  extensionCaptureEvents: many(extensionCaptureEvents),
+  mobileApprovalActions: many(mobileApprovalActions),
 }));
 
 export const orgMembersRelations = relations(orgMembers, ({ one }) => ({
@@ -226,6 +248,8 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
   }),
   paymentPlans: many(paymentPlans),
   invoices: many(invoices),
+  invoiceBundles: many(invoiceBundles),
+  invoiceRecurringSchedules: many(invoiceRecurringSchedules),
   conversations: many(conversations),
   messageLogs: many(messageLogs),
   callLogs: many(callLogs),
@@ -278,7 +302,40 @@ export const paymentPlansRelations = relations(paymentPlans, ({ one, many }) => 
     references: [contacts.id],
   }),
   invoices: many(invoices),
+  invoiceRecurringSchedules: many(invoiceRecurringSchedules),
   paymentPlanRequests: many(paymentPlanRequests),
+}));
+
+export const invoiceRecurringSchedulesRelations = relations(
+  invoiceRecurringSchedules,
+  ({ one, many }) => ({
+    org: one(orgs, {
+      fields: [invoiceRecurringSchedules.orgId],
+      references: [orgs.id],
+    }),
+    contact: one(contacts, {
+      fields: [invoiceRecurringSchedules.contactId],
+      references: [contacts.id],
+    }),
+    paymentPlan: one(paymentPlans, {
+      fields: [invoiceRecurringSchedules.paymentPlanId],
+      references: [paymentPlans.id],
+    }),
+    invoices: many(invoices),
+  })
+);
+
+export const invoiceBundlesRelations = relations(invoiceBundles, ({ one, many }) => ({
+  org: one(orgs, {
+    fields: [invoiceBundles.orgId],
+    references: [orgs.id],
+  }),
+  contact: one(contacts, {
+    fields: [invoiceBundles.contactId],
+    references: [contacts.id],
+  }),
+  items: many(invoiceBundleItems),
+  invoices: many(invoices),
 }));
 
 export const invoicesRelations = relations(invoices, ({ one, many }) => ({
@@ -294,8 +351,17 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
     fields: [invoices.paymentPlanId],
     references: [paymentPlans.id],
   }),
+  recurringSchedule: one(invoiceRecurringSchedules, {
+    fields: [invoices.recurringScheduleId],
+    references: [invoiceRecurringSchedules.id],
+  }),
+  bundle: one(invoiceBundles, {
+    fields: [invoices.bundleId],
+    references: [invoiceBundles.id],
+  }),
 
   payments: many(payments),
+  bundleItems: many(invoiceBundleItems),
   messageLogs: many(messageLogs),
   callLogs: many(callLogs),
 
@@ -308,6 +374,22 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
   chargebackEvents: many(chargebackEvents),
   agentDecisions: many(agentDecisions),
   paymentPlanRequests: many(paymentPlanRequests),
+  extensionCaptureEvents: many(extensionCaptureEvents),
+}));
+
+export const invoiceBundleItemsRelations = relations(invoiceBundleItems, ({ one }) => ({
+  org: one(orgs, {
+    fields: [invoiceBundleItems.orgId],
+    references: [orgs.id],
+  }),
+  bundle: one(invoiceBundles, {
+    fields: [invoiceBundleItems.bundleId],
+    references: [invoiceBundles.id],
+  }),
+  invoice: one(invoices, {
+    fields: [invoiceBundleItems.invoiceId],
+    references: [invoices.id],
+  }),
 }));
 
 export const paymentsRelations = relations(payments, ({ one, many }) => ({
@@ -940,7 +1022,7 @@ export const agentDecisionsRelations = relations(agentDecisions, ({ one }) => ({
   }),
 }));
 
-export const approvalRequestsRelations = relations(approvalRequests, ({ one }) => ({
+export const approvalRequestsRelations = relations(approvalRequests, ({ one, many }) => ({
   org: one(orgs, {
     fields: [approvalRequests.orgId],
     references: [orgs.id],
@@ -955,6 +1037,64 @@ export const approvalRequestsRelations = relations(approvalRequests, ({ one }) =
   }),
   decidedByUser: one(user, {
     fields: [approvalRequests.decidedByUserId],
+    references: [user.id],
+  }),
+  mobileActions: many(mobileApprovalActions),
+}));
+
+export const mobileDeviceTokensRelations = relations(mobileDeviceTokens, ({ one }) => ({
+  org: one(orgs, {
+    fields: [mobileDeviceTokens.orgId],
+    references: [orgs.id],
+  }),
+  user: one(user, {
+    fields: [mobileDeviceTokens.userId],
+    references: [user.id],
+  }),
+}));
+
+export const extensionInstallationsRelations = relations(extensionInstallations, ({ one, many }) => ({
+  org: one(orgs, {
+    fields: [extensionInstallations.orgId],
+    references: [orgs.id],
+  }),
+  user: one(user, {
+    fields: [extensionInstallations.userId],
+    references: [user.id],
+  }),
+  captureEvents: many(extensionCaptureEvents),
+}));
+
+export const extensionCaptureEventsRelations = relations(extensionCaptureEvents, ({ one }) => ({
+  org: one(orgs, {
+    fields: [extensionCaptureEvents.orgId],
+    references: [orgs.id],
+  }),
+  user: one(user, {
+    fields: [extensionCaptureEvents.userId],
+    references: [user.id],
+  }),
+  installation: one(extensionInstallations, {
+    fields: [extensionCaptureEvents.installationId],
+    references: [extensionInstallations.id],
+  }),
+  invoice: one(invoices, {
+    fields: [extensionCaptureEvents.appliedInvoiceId],
+    references: [invoices.id],
+  }),
+}));
+
+export const mobileApprovalActionsRelations = relations(mobileApprovalActions, ({ one }) => ({
+  org: one(orgs, {
+    fields: [mobileApprovalActions.orgId],
+    references: [orgs.id],
+  }),
+  approvalRequest: one(approvalRequests, {
+    fields: [mobileApprovalActions.approvalRequestId],
+    references: [approvalRequests.id],
+  }),
+  user: one(user, {
+    fields: [mobileApprovalActions.userId],
     references: [user.id],
   }),
 }));

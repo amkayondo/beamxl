@@ -1,6 +1,10 @@
-# DueFlow Web App (Migration Stub)
+# DueFlow Web App
 
-This workspace is reserved for the Next.js web app during Turborepo migration.
+This workspace now contains the active Next.js runtime for DueFlow.
 
-Current production app remains at repository root while services and shared packages
-are extracted incrementally.
+Main runtime paths:
+- `apps/web/app`
+- `apps/web/src`
+
+Run locally:
+- `bun run dev:web` (from repository root)

@@ -24,4 +24,5 @@ export * from "./disputes";
 export * from "./agents";
 export * from "./portal";
 export * from "./integration-phase2";
+export * from "./mobile-extension";
 export * from "./relations";

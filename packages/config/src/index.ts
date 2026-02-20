@@ -1,1 +1,1 @@
-export { env } from "../../../src/env";
+export { env } from "../../../apps/web/src/env";

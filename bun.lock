@@ -44,9 +44,58 @@
         "postcss": "^8.5.3",
         "shadcn": "^3.8.5",
         "tailwindcss": "^4.0.15",
+        "turbo": "^2.3.3",
         "tw-animate-css": "^1.4.0",
         "typescript": "^5.8.2",
       },
+    },
+    "apps/extension": {
+      "name": "@dueflow/extension",
+      "version": "0.1.0",
+    },
+    "apps/mobile": {
+      "name": "@dueflow/mobile",
+      "version": "0.1.0",
+    },
+    "apps/web": {
+      "name": "@dueflow/web",
+      "version": "0.1.0",
+    },
+    "apps/worker": {
+      "name": "@dueflow/worker",
+      "version": "0.1.0",
+    },
+    "packages/ai": {
+      "name": "@dueflow/ai",
+      "version": "0.1.0",
+    },
+    "packages/comms": {
+      "name": "@dueflow/comms",
+      "version": "0.1.0",
+    },
+    "packages/compliance": {
+      "name": "@dueflow/compliance",
+      "version": "0.1.0",
+    },
+    "packages/config": {
+      "name": "@dueflow/config",
+      "version": "0.1.0",
+    },
+    "packages/db": {
+      "name": "@dueflow/db",
+      "version": "0.1.0",
+    },
+    "packages/types": {
+      "name": "@dueflow/types",
+      "version": "0.1.0",
+    },
+    "packages/ui": {
+      "name": "@dueflow/ui",
+      "version": "0.1.0",
+    },
+    "packages/workflow-engine": {
+      "name": "@dueflow/workflow-engine",
+      "version": "0.1.0",
     },
   },
   "packages": {
@@ -143,6 +192,30 @@
     "@dotenvx/dotenvx": ["@dotenvx/dotenvx@1.52.0", "", { "dependencies": { "commander": "^11.1.0", "dotenv": "^17.2.1", "eciesjs": "^0.4.10", "execa": "^5.1.1", "fdir": "^6.2.0", "ignore": "^5.3.0", "object-treeify": "1.1.33", "picomatch": "^4.0.2", "which": "^4.0.0" }, "bin": { "dotenvx": "src/cli/dotenvx.js" } }, "sha512-CaQcc8JvtzQhUSm9877b6V4Tb7HCotkcyud9X2YwdqtQKwgljkMRwU96fVYKnzN3V0Hj74oP7Es+vZ0mS+Aa1w=="],
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
+
+    "@dueflow/ai": ["@dueflow/ai@workspace:packages/ai"],
+
+    "@dueflow/comms": ["@dueflow/comms@workspace:packages/comms"],
+
+    "@dueflow/compliance": ["@dueflow/compliance@workspace:packages/compliance"],
+
+    "@dueflow/config": ["@dueflow/config@workspace:packages/config"],
+
+    "@dueflow/db": ["@dueflow/db@workspace:packages/db"],
+
+    "@dueflow/extension": ["@dueflow/extension@workspace:apps/extension"],
+
+    "@dueflow/mobile": ["@dueflow/mobile@workspace:apps/mobile"],
+
+    "@dueflow/types": ["@dueflow/types@workspace:packages/types"],
+
+    "@dueflow/ui": ["@dueflow/ui@workspace:packages/ui"],
+
+    "@dueflow/web": ["@dueflow/web@workspace:apps/web"],
+
+    "@dueflow/worker": ["@dueflow/worker@workspace:apps/worker"],
+
+    "@dueflow/workflow-engine": ["@dueflow/workflow-engine@workspace:packages/workflow-engine"],
 
     "@ecies/ciphers": ["@ecies/ciphers@0.2.5", "", { "peerDependencies": { "@noble/ciphers": "^1.0.0" } }, "sha512-GalEZH4JgOMHYYcYmVqnFirFsjZHeoGMDt9IxEnM9F7GRUUyUksJ7Ou53L83WHJq3RWKD3AcBpo0iQh0oMpf8A=="],
 
@@ -1259,6 +1332,20 @@
     "tsconfig-paths": ["tsconfig-paths@4.2.0", "", { "dependencies": { "json5": "^2.2.2", "minimist": "^1.2.6", "strip-bom": "^3.0.0" } }, "sha512-NoZ4roiN7LnbKn9QqE1amc9DJfzvZXxF4xDavcOWt1BPkdx+m+0gJuPM+S0vCe7zTJMYUP0R8pO2XMr+Y8oLIg=="],
 
     "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
+    "turbo": ["turbo@2.8.10", "", { "optionalDependencies": { "turbo-darwin-64": "2.8.10", "turbo-darwin-arm64": "2.8.10", "turbo-linux-64": "2.8.10", "turbo-linux-arm64": "2.8.10", "turbo-windows-64": "2.8.10", "turbo-windows-arm64": "2.8.10" }, "bin": { "turbo": "bin/turbo" } }, "sha512-OxbzDES66+x7nnKGg2MwBA1ypVsZoDTLHpeaP4giyiHSixbsiTaMyeJqbEyvBdp5Cm28fc+8GG6RdQtic0ijwQ=="],
+
+    "turbo-darwin-64": ["turbo-darwin-64@2.8.10", "", { "os": "darwin", "cpu": "x64" }, "sha512-A03fXh+B7S8mL3PbdhTd+0UsaGrhfyPkODvzBDpKRY7bbeac4MDFpJ7I+Slf2oSkCEeSvHKR7Z4U71uKRUfX7g=="],
+
+    "turbo-darwin-arm64": ["turbo-darwin-arm64@2.8.10", "", { "os": "darwin", "cpu": "arm64" }, "sha512-sidzowgWL3s5xCHLeqwC9M3s9M0i16W1nuQF3Mc7fPHpZ+YPohvcbVFBB2uoRRHYZg6yBnwD4gyUHKTeXfwtXA=="],
+
+    "turbo-linux-64": ["turbo-linux-64@2.8.10", "", { "os": "linux", "cpu": "x64" }, "sha512-YK9vcpL3TVtqonB021XwgaQhY9hJJbKKUhLv16osxV0HkcQASQWUqR56yMge7puh6nxU67rQlTq1b7ksR1T3KA=="],
+
+    "turbo-linux-arm64": ["turbo-linux-arm64@2.8.10", "", { "os": "linux", "cpu": "arm64" }, "sha512-3+j2tL0sG95iBJTm+6J8/45JsETQABPqtFyYjVjBbi6eVGdtNTiBmHNKrbvXRlQ3ZbUG75bKLaSSDHSEEN+btQ=="],
+
+    "turbo-windows-64": ["turbo-windows-64@2.8.10", "", { "os": "win32", "cpu": "x64" }, "sha512-hdeF5qmVY/NFgiucf8FW0CWJWtyT2QPm5mIsX0W1DXAVzqKVXGq+Zf+dg4EUngAFKjDzoBeN6ec2Fhajwfztkw=="],
+
+    "turbo-windows-arm64": ["turbo-windows-arm64@2.8.10", "", { "os": "win32", "cpu": "arm64" }, "sha512-QGdr/Q8LWmj+ITMkSvfiz2glf0d7JG0oXVzGL3jxkGqiBI1zXFj20oqVY0qWi+112LO9SVrYdpHS0E/oGFrMbQ=="],
 
     "tw-animate-css": ["tw-animate-css@1.4.0", "", {}, "sha512-7bziOlRqH0hJx80h/3mbicLW7o8qLsH5+RaLR2t+OHM3D0JlWGODQKQ4cxbK7WlvmUxpcj6Kgu6EKqjrGFe3QQ=="],
 

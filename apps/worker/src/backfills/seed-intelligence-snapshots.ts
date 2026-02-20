@@ -1,6 +1,6 @@
 import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
 
-import { db } from "../../../../src/server/db";
+import { db } from "@dueflow/db";
 import {
   channelEffectivenessDaily,
   clientRiskScores,
@@ -10,7 +10,7 @@ import {
   invoices,
   messageLogs,
   orgs,
-} from "../../../../src/server/db/schema";
+} from "@dueflow/db";
 
 function startOfUtcDay(input = new Date()) {
   return new Date(Date.UTC(input.getUTCFullYear(), input.getUTCMonth(), input.getUTCDate()));
