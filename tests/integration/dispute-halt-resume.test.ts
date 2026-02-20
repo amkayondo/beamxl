@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "vitest";
 
 let isInvoiceActionableForReminder: typeof import("@/server/services/reminder.service").isInvoiceActionableForReminder;
 

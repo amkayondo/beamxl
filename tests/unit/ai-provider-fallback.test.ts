@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "vitest";
 
 let runAgentTask: typeof import("@/server/services/ai-runtime.service").runAgentTask;
 

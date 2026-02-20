@@ -12,20 +12,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Mobile typecheck
-        run: bun --cwd apps/mobile run typecheck
+        run: pnpm --filter @dueflow/mobile run typecheck
 
   extension-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Extension typecheck
-        run: bun --cwd apps/extension run typecheck
+        run: pnpm --filter @dueflow/extension run typecheck
       - name: Extension build
-        run: bun --cwd apps/extension run build
+        run: pnpm --filter @dueflow/extension run build

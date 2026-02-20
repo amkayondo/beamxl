@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 
 import { getTopupPack, TOPUP_PACKS } from "@/server/services/topup-packs";
 

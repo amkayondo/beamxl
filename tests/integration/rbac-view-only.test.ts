@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "vitest";
 
 let assertRole: typeof import("@/lib/rbac").assertRole;
 let hasRequiredRole: typeof import("@/lib/rbac").hasRequiredRole;

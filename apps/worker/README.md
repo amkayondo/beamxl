@@ -8,4 +8,4 @@ Main runtime paths:
 - `apps/worker/src/backfills`
 
 Run locally:
-- `bun run dev:worker` (from repository root)
+- `pnpm run dev:worker` (from repository root)

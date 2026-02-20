@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "bun run ./src/index.ts",
+    "dev": "tsx ./src/index.ts",
     "build": "tsc --noEmit -p ./tsconfig.json",
     "typecheck": "tsc --noEmit -p ./tsconfig.json",
-    "backfill:normalize-invoice-status": "bun run ./src/backfills/normalize-invoice-status.ts",
-    "backfill:seed-intelligence": "bun run ./src/backfills/seed-intelligence-snapshots.ts",
-    "backfill:hydrate-workflow-versions": "bun run ./src/backfills/hydrate-workflow-versions.ts"
+    "backfill:normalize-invoice-status": "tsx ./src/backfills/normalize-invoice-status.ts",
+    "backfill:seed-intelligence": "tsx ./src/backfills/seed-intelligence-snapshots.ts",
+    "backfill:hydrate-workflow-versions": "tsx ./src/backfills/hydrate-workflow-versions.ts"
   }
 }

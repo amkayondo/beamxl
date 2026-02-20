@@ -29,7 +29,7 @@ Current production web and worker runtimes still execute from the root app durin
 1. Install dependencies:
 
 ```bash
-bun install
+pnpm install
 ```
 
 2. Configure environment:
@@ -41,20 +41,20 @@ cp .env.example .env
 3. Generate and run migrations:
 
 ```bash
-bun db:generate
-bun db:migrate
+pnpm run db:generate
+pnpm run db:migrate
 ```
 
 4. Run web app:
 
 ```bash
-bun run dev:web
+pnpm run dev:web
 ```
 
 5. Run worker (separate terminal):
 
 ```bash
-bun run dev:worker
+pnpm run dev:worker
 ```
 
 ## Important Routes

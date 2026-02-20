@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "vitest";
 
 let resolveInvoicePaymentResult: typeof import("@/server/services/invoice.service").resolveInvoicePaymentResult;
 let resolveCheckoutAmountPolicy: typeof import("@/server/services/payment.service").resolveCheckoutAmountPolicy;

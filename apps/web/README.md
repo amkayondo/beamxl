@@ -7,4 +7,4 @@ Main runtime paths:
 - `apps/web/src`
 
 Run locally:
-- `bun run dev:web` (from repository root)
+- `pnpm run dev:web` (from repository root)
