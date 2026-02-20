@@ -4,10 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build",
-    "start": "next start",
+    "with-env": "dotenv -e ../../.env --",
+    "dev": "pnpm run with-env next dev --turbo",
+    "build": "pnpm run with-env next build",
+    "start": "pnpm run with-env next start",
     "typecheck": "tsc --noEmit -p ./tsconfig.json",
-    "test": "vitest run --config ../../vitest.config.ts ../../tests/**/*.test.ts"
+    "test": "vitest run --root ../.. --config vitest.config.ts"
   }
 }

@@ -27,8 +27,8 @@
     "turbo:test": "turbo run test"
   },
   "dependencies": {
-    "@better-auth/expo": "^1.3.0",
     "@auth/drizzle-adapter": "^1.7.2",
+    "@better-auth/expo": "^1.3.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.69.0",
     "@trpc/client": "^11.0.0",
@@ -59,11 +59,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.5",
-    "@types/chrome": "^0.1.24",
     "@tailwindcss/postcss": "^4.0.15",
+    "@types/chrome": "^0.1.24",
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.30.5",
     "postcss": "^8.5.3",
     "shadcn": "^3.8.5",

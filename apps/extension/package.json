@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "wxt",
+    "dev:ch": "wxt",
     "build": "wxt build",
     "zip": "wxt zip",
     "typecheck": "tsc --noEmit"

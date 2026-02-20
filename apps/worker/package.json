@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx ./src/index.ts",
+    "with-env": "dotenv -e ../../.env --",
+    "dev": "pnpm run with-env tsx ./src/index.ts",
     "build": "tsc --noEmit -p ./tsconfig.json",
     "typecheck": "tsc --noEmit -p ./tsconfig.json",
     "backfill:normalize-invoice-status": "tsx ./src/backfills/normalize-invoice-status.ts",

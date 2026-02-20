@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "main": "index.ts",
   "scripts": {
-    "dev": "expo start --clear",
-    "start": "expo start",
+    "dev:app": "expo start --clear",
+    "start:app": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "build": "eas build --platform all",
