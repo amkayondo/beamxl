@@ -1,20 +1,20 @@
+"use client";
+
 import {
   ArrowRight,
   BarChart3,
   Bell,
-  Bot,
   Briefcase,
   Building2,
-  CheckCircle2,
+  Check,
+  ChevronDown,
   ChevronRight,
   Clock,
-  Code2,
   CreditCard,
   FileText,
   GitBranch,
   Globe,
   Home,
-  Layers,
   LayoutDashboard,
   Lock,
   Mail,
@@ -25,100 +25,184 @@ import {
   Receipt,
   Shield,
   Smartphone,
-  Sparkles,
-  Timer,
   TrendingUp,
   Users,
   Workflow,
   Zap,
 } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+/* ------------------------------------------------------------------ */
+/*  UTILS                                                             */
+/* ------------------------------------------------------------------ */
+function cn(...classes: (string | false | undefined | null)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
+/* ------------------------------------------------------------------ */
+/*  NAVBAR                                                            */
+/* ------------------------------------------------------------------ */
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  return (
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-200",
+        scrolled
+          ? "bg-white/80 backdrop-blur-xl border-b border-zinc-200"
+          : "bg-transparent"
+      )}
+    >
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+        <a href="/" className="flex items-center gap-2">
+          <div className="flex size-7 items-center justify-center rounded-md bg-zinc-900">
+            <Zap className="size-3.5 text-white" />
+          </div>
+          <span className="text-[15px] font-semibold tracking-tight text-zinc-900">
+            DueFlow
+          </span>
+        </a>
+
+        <nav className="hidden items-center gap-1 md:flex">
+          {["Features", "How it works", "Pricing"].map((item) => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
+              className="rounded-md px-3 py-1.5 text-[13px] text-zinc-500 transition-colors hover:text-zinc-900"
+            >
+              {item}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="/sign-in"
+            className="hidden text-[13px] text-zinc-500 transition-colors hover:text-zinc-900 sm:block"
+          >
+            Log in
+          </a>
+          <a
+            href="/sign-in"
+            className="rounded-full bg-zinc-900 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            Get started for free
+          </a>
+        </div>
+      </div>
+    </header>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  HERO                                                              */
 /* ------------------------------------------------------------------ */
 function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border/40">
-      {/* Gradient background effects */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-150 w-225 rounded-full bg-blue-500/5 blur-3xl" />
-        <div className="absolute right-0 top-1/4 h-75 w-100 rounded-full bg-violet-500/5 blur-3xl" />
-      </div>
-
-      <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pt-28 lg:pt-32">
-        <div className="flex flex-col items-center text-center">
-          <Badge className="mb-6 gap-1.5 border-blue-500/20 bg-blue-500/10 text-blue-400">
-            <Sparkles className="size-3" />
-            Payment follow-up automation
-          </Badge>
-
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Turn what&apos;s due into{" "}
-            <span className="bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-              paid
-            </span>{" "}
-            — automatically.
-          </h1>
-
-          <p className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            DueFlow automates your payment follow-ups with intelligent email,
-            SMS, and voice reminders. Get paid faster, improve cash flow, and
-            never send another awkward &ldquo;just checking in&rdquo; email.
-          </p>
-
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" className="gap-2 bg-blue-600 text-white hover:bg-blue-700">
-              Start free trial
-              <ArrowRight className="size-4" />
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2">
-              <Play className="size-4" />
-              Book a demo
-            </Button>
-          </div>
-
-          <div className="mt-12 flex flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:gap-8">
-            <span className="flex items-center gap-2">
-              <Zap className="size-4 text-blue-400" />
-              Connects to your billing stack in minutes
+    <section className="pt-32 pb-20 sm:pt-36 sm:pb-24">
+      <div className="mx-auto max-w-6xl px-6">
+        {/* Top pill */}
+        <div className="flex justify-center mb-6">
+          <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3.5 py-1.5">
+            <span className="flex size-5 items-center justify-center rounded-full bg-zinc-900">
+              <Zap className="size-3 text-white" />
             </span>
-            <span className="flex items-center gap-2">
-              <Workflow className="size-4 text-blue-400" />
-              Visual workflows for email, SMS &amp; voice
+            <span className="text-[13px] text-zinc-600">
+              Payment follow-up automation
             </span>
-            <span className="flex items-center gap-2">
-              <Code2 className="size-4 text-blue-400" />
-              Zero coding required
-            </span>
+            <ArrowRight className="size-3 text-zinc-400" />
           </div>
         </div>
 
-        {/* Hero visual — workflow mockup */}
+        {/* Headline */}
+        <h1 className="mx-auto max-w-3xl text-center text-4xl font-bold leading-[1.1] tracking-tight text-zinc-900 sm:text-5xl lg:text-6xl">
+          Turn what&apos;s due into paid — automatically
+        </h1>
+
+        <p className="mx-auto mt-5 max-w-xl text-center text-base leading-relaxed text-zinc-500 sm:text-lg">
+          Intelligent email, SMS, and voice reminders that get you paid faster.
+          Stop chasing invoices. Start collecting automatically.
+        </p>
+
+        {/* CTAs */}
+        <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <a
+            href="/sign-in"
+            className="flex items-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            Get started for free
+          </a>
+          <a
+            href="#how-it-works"
+            className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-6 py-3 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+          >
+            Book a demo
+          </a>
+        </div>
+
+        {/* Product mockup */}
         <div className="mx-auto mt-16 max-w-4xl">
-          <div className="rounded-xl border border-border/60 bg-card/60 p-1 shadow-2xl shadow-black/30 backdrop-blur-sm">
-            <div className="rounded-lg bg-background/80 p-6">
-              {/* Fake workflow UI */}
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
-                <div className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1">
-                  <Workflow className="size-3" />
-                  Workflow Builder
+          <div className="rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-zinc-200/50">
+            <div className="rounded-xl bg-zinc-50 p-6 sm:p-8">
+              {/* Toolbar */}
+              <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-7 items-center justify-center rounded-md bg-zinc-100">
+                    <Workflow className="size-3.5 text-zinc-600" />
+                  </div>
+                  <span className="text-[13px] font-medium text-zinc-700">
+                    Invoice Follow-up Sequence
+                  </span>
                 </div>
-                <span className="text-border">|</span>
-                <span>Invoice Follow-up Sequence</span>
+                <div className="rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-600">
+                  Active
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-4 overflow-x-auto pb-2">
-                <WorkflowNode icon={<FileText className="size-4" />} label="Invoice Overdue" sublabel="Day 3" color="amber" />
-                <WorkflowArrow />
-                <WorkflowNode icon={<Mail className="size-4" />} label="Email Reminder" sublabel="Sent" color="blue" />
-                <WorkflowArrow />
-                <WorkflowNode icon={<Smartphone className="size-4" />} label="SMS Reminder" sublabel="Day 7" color="violet" />
-                <WorkflowArrow />
-                <WorkflowNode icon={<CheckCircle2 className="size-4" />} label="Payment Received" sublabel="Resolved" color="green" />
+
+              {/* Flow nodes */}
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:gap-4">
+                <FlowNode
+                  icon={<FileText className="size-4" />}
+                  label="Invoice Overdue"
+                  sublabel="Day 3"
+                  bgColor="bg-amber-50"
+                  iconColor="text-amber-600"
+                  borderColor="border-amber-200"
+                />
+                <FlowConnector />
+                <FlowNode
+                  icon={<Mail className="size-4" />}
+                  label="Email Reminder"
+                  sublabel="Sent"
+                  bgColor="bg-blue-50"
+                  iconColor="text-blue-600"
+                  borderColor="border-blue-200"
+                />
+                <FlowConnector />
+                <FlowNode
+                  icon={<Smartphone className="size-4" />}
+                  label="SMS Reminder"
+                  sublabel="Day 7"
+                  bgColor="bg-violet-50"
+                  iconColor="text-violet-600"
+                  borderColor="border-violet-200"
+                />
+                <FlowConnector />
+                <FlowNode
+                  icon={<Check className="size-4" />}
+                  label="Paid"
+                  sublabel="Resolved"
+                  bgColor="bg-emerald-50"
+                  iconColor="text-emerald-600"
+                  borderColor="border-emerald-200"
+                />
               </div>
             </div>
           </div>
@@ -128,34 +212,449 @@ function Hero() {
   );
 }
 
-function WorkflowNode({
+function FlowNode({
   icon,
   label,
   sublabel,
-  color,
+  bgColor,
+  iconColor,
+  borderColor,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   sublabel: string;
-  color: "amber" | "blue" | "violet" | "green";
+  bgColor: string;
+  iconColor: string;
+  borderColor: string;
 }) {
-  const colors = {
-    amber: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-    blue: "border-blue-500/30 bg-blue-500/10 text-blue-400",
-    violet: "border-violet-500/30 bg-violet-500/10 text-violet-400",
-    green: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  };
   return (
-    <div className={`flex flex-col items-center gap-2 rounded-lg border p-4 min-w-30 ${colors[color]}`}>
-      {icon}
-      <span className="text-xs font-medium text-foreground">{label}</span>
-      <span className="text-[10px] text-muted-foreground">{sublabel}</span>
+    <div
+      className={cn(
+        "flex min-w-28 flex-col items-center gap-2.5 rounded-xl border p-4 sm:min-w-32",
+        bgColor,
+        borderColor
+      )}
+    >
+      <div className={iconColor}>{icon}</div>
+      <span className="text-xs font-medium text-zinc-800 whitespace-nowrap">
+        {label}
+      </span>
+      <span className="text-[10px] text-zinc-500">{sublabel}</span>
     </div>
   );
 }
 
-function WorkflowArrow() {
-  return <ChevronRight className="size-5 shrink-0 text-muted-foreground/50" />;
+function FlowConnector() {
+  return (
+    <div className="flex items-center shrink-0">
+      <div className="h-px w-4 bg-zinc-200 sm:w-6" />
+      <ChevronRight className="size-3.5 text-zinc-300" />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  TRUST BAR                                                         */
+/* ------------------------------------------------------------------ */
+function TrustBar() {
+  return (
+    <section className="border-y border-zinc-100 bg-zinc-50/50">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <p className="mb-7 text-center text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+          Trusted by finance teams everywhere
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+          {[
+            "Agencies",
+            "SaaS",
+            "Freelancers",
+            "Property Mgmt",
+            "Professional Services",
+          ].map((name) => (
+            <span key={name} className="text-[14px] font-medium text-zinc-400">
+              {name}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  CAPABILITIES ROW  (Secoda-style icon cards)                       */
+/* ------------------------------------------------------------------ */
+function Capabilities() {
+  const items = [
+    {
+      icon: <Workflow className="size-5" />,
+      title: "Automate",
+      desc: "Visual workflows for email, SMS, and voice follow-ups.",
+      color: "bg-violet-50 text-violet-600",
+    },
+    {
+      icon: <BarChart3 className="size-5" />,
+      title: "Track",
+      desc: "Real-time dashboards for every invoice and payment.",
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
+      icon: <GitBranch className="size-5" />,
+      title: "Adapt",
+      desc: "Smart branching logic that responds to client actions.",
+      color: "bg-emerald-50 text-emerald-600",
+    },
+    {
+      icon: <Shield className="size-5" />,
+      title: "Comply",
+      desc: "Built-in TCPA and CAN-SPAM compliance at every step.",
+      color: "bg-amber-50 text-amber-600",
+    },
+  ];
+
+  return (
+    <section className="py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+            Meet the payment follow-up
+            <br />
+            platform built for speed
+          </h2>
+          <p className="mt-4 text-base text-zinc-500">
+            Connect your invoices and let DueFlow handle the rest — from gentle
+            reminders to smart escalation.
+          </p>
+        </div>
+
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((item) => (
+            <div key={item.title} className="text-center">
+              <div
+                className={cn(
+                  "mx-auto flex size-12 items-center justify-center rounded-2xl",
+                  item.color
+                )}
+              >
+                {item.icon}
+              </div>
+              <h3 className="mt-4 text-[15px] font-semibold text-zinc-900">
+                {item.title}
+              </h3>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  FEATURES — ACCORDION + SCREENSHOT (Secoda-style)                  */
+/* ------------------------------------------------------------------ */
+function FeaturesAccordion() {
+  const [openIndex, setOpenIndex] = useState(0);
+
+  const features = [
+    {
+      title: "Visual Workflow Builder",
+      desc: "Design your collection strategy with drag-and-drop. Set custom delays, triggers, and conditions — no code required. Reuse templates for common scenarios.",
+      cta: "Learn more",
+    },
+    {
+      title: "Email + SMS Reminders",
+      desc: "Send personalized, branded emails and high-converting SMS reminders with one-click payment links. Smart send-time optimization maximizes open rates.",
+      cta: "Learn more",
+    },
+    {
+      title: "AI Voice Escalation",
+      desc: "When emails and texts are ignored, escalate with professional AI-driven voice calls. Polite, fully TCPA-compliant, and highly effective at breaking through.",
+      cta: "Learn more",
+    },
+    {
+      title: "Smart Branching Logic",
+      desc: "Auto-stop reminders the instant payment lands. Route VIP clients to softer sequences. Create conditional paths based on amount, tier, or response.",
+      cta: "Learn more",
+    },
+  ];
+
+  return (
+    <section id="features" className="border-t border-zinc-100 bg-zinc-50">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionLabel>Features</SectionLabel>
+        <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+          Everything you need to get paid on time
+        </h2>
+
+        <div className="mt-16 grid gap-12 lg:grid-cols-2 lg:gap-16 items-start">
+          {/* Accordion */}
+          <div className="space-y-0 divide-y divide-zinc-200">
+            {features.map((f, i) => (
+              <div key={f.title}>
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(i === openIndex ? -1 : i)}
+                  className="flex w-full items-center justify-between py-5 text-left"
+                >
+                  <span
+                    className={cn(
+                      "text-[15px] font-semibold transition-colors",
+                      openIndex === i ? "text-zinc-900" : "text-zinc-500"
+                    )}
+                  >
+                    {f.title}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "size-4 text-zinc-400 transition-transform duration-200",
+                      openIndex === i && "rotate-180"
+                    )}
+                  />
+                </button>
+                {openIndex === i && (
+                  <div className="pb-5">
+                    <p className="text-[14px] leading-relaxed text-zinc-500">
+                      {f.desc}
+                    </p>
+                    <a
+                      href="#"
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-4 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+                    >
+                      {f.cta}
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Static product screenshot mockup */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-lg shadow-zinc-200/40">
+            <div className="rounded-xl bg-zinc-50 p-5">
+              {/* Mock dashboard */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="size-2.5 rounded-full bg-zinc-200" />
+                <div className="size-2.5 rounded-full bg-zinc-200" />
+                <div className="size-2.5 rounded-full bg-zinc-200" />
+                <div className="ml-auto h-5 w-16 rounded bg-zinc-200" />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 rounded-lg bg-white p-3 border border-zinc-100">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-amber-50">
+                    <FileText className="size-3.5 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-3 w-28 rounded bg-zinc-200" />
+                    <div className="mt-1.5 h-2 w-20 rounded bg-zinc-100" />
+                  </div>
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+                    Overdue
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg bg-white p-3 border border-zinc-100">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-blue-50">
+                    <Mail className="size-3.5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-3 w-32 rounded bg-zinc-200" />
+                    <div className="mt-1.5 h-2 w-24 rounded bg-zinc-100" />
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600">
+                    Sent
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg bg-white p-3 border border-zinc-100">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-emerald-50">
+                    <Check className="size-3.5 text-emerald-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-3 w-24 rounded bg-zinc-200" />
+                    <div className="mt-1.5 h-2 w-16 rounded bg-zinc-100" />
+                  </div>
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+                    Paid
+                  </span>
+                </div>
+              </div>
+
+              {/* Mini chart */}
+              <div className="mt-5 rounded-lg bg-white border border-zinc-100 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-medium text-zinc-500">
+                    Collection Rate
+                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-600">
+                    +22%
+                  </span>
+                </div>
+                <div className="flex items-end gap-1.5 h-16">
+                  {[35, 42, 38, 55, 60, 52, 68, 72, 65, 78, 82, 88].map(
+                    (h, i) => (
+                      <div
+                        key={`bar-${i}`}
+                        className="flex-1 rounded-sm bg-zinc-900"
+                        style={{ height: `${h}%` }}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  FEATURES GRID (Additional features)                               */
+/* ------------------------------------------------------------------ */
+function FeaturesGrid() {
+  const features = [
+    {
+      icon: <BarChart3 className="size-5" />,
+      title: "Real-Time Tracking",
+      desc: "Live dashboards showing every reminder, open rate, and incoming payment across your portfolio.",
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
+      icon: <LayoutDashboard className="size-5" />,
+      title: "Reporting & Insights",
+      desc: "Track collection rates, DSO trends, and time-to-pay across your entire customer base.",
+      color: "bg-violet-50 text-violet-600",
+    },
+    {
+      icon: <CreditCard className="size-5" />,
+      title: "Payment Links",
+      desc: "Generate one-click payment links embedded in every reminder. Clients pay in seconds.",
+      color: "bg-emerald-50 text-emerald-600",
+    },
+  ];
+
+  return (
+    <section className="py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="grid gap-5 sm:grid-cols-3">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-2xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300"
+            >
+              <div
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-xl",
+                  f.color
+                )}
+              >
+                {f.icon}
+              </div>
+              <h3 className="mt-4 text-[15px] font-semibold text-zinc-900">
+                {f.title}
+              </h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-zinc-500">
+                {f.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  HOW IT WORKS — TIMELINE                                           */
+/* ------------------------------------------------------------------ */
+function HowItWorks() {
+  const steps = [
+    {
+      day: "Day 0",
+      title: "Invoice Sent",
+      desc: "Invoice generated and sent. DueFlow silently starts tracking the due date.",
+      icon: <FileText className="size-4" />,
+      color: "bg-zinc-100 text-zinc-500",
+    },
+    {
+      day: "Day 3",
+      title: "Email Reminder",
+      desc: "Polite, automated email with a direct payment link. Branded to match your business.",
+      icon: <Mail className="size-4" />,
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
+      day: "Day 7",
+      title: "SMS Escalation",
+      desc: "No payment detected. A friendly SMS reminder sent directly to the client's phone.",
+      icon: <Smartphone className="size-4" />,
+      color: "bg-violet-50 text-violet-600",
+    },
+    {
+      day: "Day 14",
+      title: "Voice Escalation",
+      desc: "Still unpaid. Professional AI voice call initiated to resolve the block.",
+      icon: <Phone className="size-4" />,
+      color: "bg-amber-50 text-amber-600",
+    },
+    {
+      day: "Day 15",
+      title: "Payment Received",
+      desc: "Payment arrives. All reminders halt. Automated receipt sent instantly.",
+      icon: <Check className="size-4" />,
+      color: "bg-emerald-50 text-emerald-600",
+    },
+  ];
+
+  return (
+    <section id="how-it-works" className="border-t border-zinc-100 bg-zinc-50">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionLabel>How it works</SectionLabel>
+        <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+          The anatomy of a perfect follow-up
+        </h2>
+        <p className="mx-auto mt-4 max-w-lg text-center text-[15px] text-zinc-500">
+          See how DueFlow handles an overdue invoice from first reminder to
+          final receipt.
+        </p>
+
+        <div className="mx-auto mt-16 max-w-2xl">
+          <div className="relative">
+            {/* Vertical line */}
+            <div className="absolute left-5 top-0 bottom-0 w-px bg-zinc-200 sm:left-7" />
+
+            <div className="space-y-8">
+              {steps.map((s) => (
+                <div key={s.day} className="relative flex gap-5 sm:gap-7">
+                  <div
+                    className={cn(
+                      "relative z-10 flex size-10 shrink-0 items-center justify-center rounded-full sm:size-14",
+                      s.color
+                    )}
+                  >
+                    {s.icon}
+                  </div>
+                  <div className="pt-1 sm:pt-3">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+                      {s.day}
+                    </span>
+                    <h3 className="mt-1 text-[15px] font-semibold text-zinc-900">
+                      {s.title}
+                    </h3>
+                    <p className="mt-1 text-[14px] leading-relaxed text-zinc-500">
+                      {s.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -163,353 +662,68 @@ function WorkflowArrow() {
 /* ------------------------------------------------------------------ */
 function Problem() {
   return (
-    <section className="border-b border-border/40 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            You run a business. Not a collections agency.
+    <section className="py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <SectionLabel>The problem</SectionLabel>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+            You run a business — not a collections agency
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Chasing late payments is the silent killer of growing businesses. Every
-            ignored invoice means unpredictable cash flow, wasted hours, and
-            strained client relationships.
+          <p className="mt-4 text-base text-zinc-500">
+            Chasing late payments kills growth. Every ignored invoice means
+            unpredictable cash flow, wasted hours, and strained relationships.
           </p>
         </div>
 
-        <div className="mt-16 grid gap-6 sm:grid-cols-3">
-          <ProblemCard
-            icon={<Clock className="size-6" />}
-            title="Lost Time"
-            description="Hours spent manually tracking spreadsheets, cross-referencing bank accounts, and drafting follow-up emails."
-          />
-          <ProblemCard
-            icon={<TrendingUp className="size-6" />}
-            title="Cash Flow Stress"
-            description="Growth stalls and payroll becomes stressful when your money is stuck in accounts receivable."
-          />
-          <ProblemCard
-            icon={<Bell className="size-6" />}
-            title="Manual Follow-ups"
-            description="The constant, uncomfortable friction of reminding your clients to pay what they owe."
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProblemCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <Card className="border-border/60 bg-card/60">
-      <CardContent className="p-6">
-        <div className="flex size-11 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-          {icon}
-        </div>
-        <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  SOLUTION — 3 STEPS                                                */
-/* ------------------------------------------------------------------ */
-function Solution() {
-  return (
-    <section className="border-b border-border/40">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 gap-1.5 border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-            <Zap className="size-3" />
-            How it works
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Put your accounts receivable on autopilot.
-          </h2>
-        </div>
-
-        <div className="mt-16 grid gap-12 sm:grid-cols-3">
-          <StepCard
-            step="01"
-            icon={<Layers className="size-6" />}
-            title="Connect your invoices"
-            description="Sync DueFlow securely with your existing accounting or billing software in just a few clicks."
-          />
-          <StepCard
-            step="02"
-            icon={<Workflow className="size-6" />}
-            title="Automate reminders"
-            description="Build custom sequences that trigger the right message, on the right channel, at exactly the right time."
-          />
-          <StepCard
-            step="03"
-            icon={<CreditCard className="size-6" />}
-            title="Get paid faster"
-            description="Watch your DSO drop as payments arrive automatically with one-click payment links."
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function StepCard({
-  step,
-  icon,
-  title,
-  description,
-}: {
-  step: string;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex flex-col items-center text-center">
-      <div className="flex size-14 items-center justify-center rounded-full border border-border bg-muted/50">
-        {icon}
-      </div>
-      <span className="mt-4 text-xs font-bold uppercase tracking-widest text-blue-400">
-        Step {step}
-      </span>
-      <h3 className="mt-2 text-lg font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{description}</p>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  FEATURES                                                          */
-/* ------------------------------------------------------------------ */
-function Features() {
-  const features = [
-    {
-      icon: <Workflow className="size-6" />,
-      title: "Visual Workflow Builder",
-      description: "Design your collection strategy visually.",
-      bullets: [
-        "Drag-and-drop interface to map out exact follow-up sequences",
-        "Set custom delays and triggers without writing a single line of code",
-        "Reusable templates for common collection scenarios",
-      ],
-      visual: "workflow",
-    },
-    {
-      icon: <MessageSquare className="size-6" />,
-      title: "Automated Email + SMS Reminders",
-      description: "Reach them where they actually look.",
-      bullets: [
-        "Personalized, branded emails that look like they came from you",
-        "High-converting SMS reminders with secure, one-click payment links",
-        "Smart send-time optimization based on open rates",
-      ],
-      visual: "messaging",
-    },
-    {
-      icon: <Mic className="size-6" />,
-      title: "AI Voice Escalation",
-      description: "Escalate intelligently when messages are ignored.",
-      bullets: [
-        "Professional, AI-driven voice calls for severely overdue accounts",
-        "Polite, compliant, and highly effective at breaking through the noise",
-        "Automatic call logging and transcript recording",
-      ],
-      visual: "voice",
-    },
-    {
-      icon: <BarChart3 className="size-6" />,
-      title: "Real-Time Payment Tracking",
-      description: "Know exactly where your money is.",
-      bullets: [
-        "Live dashboards showing sent reminders, open rates, and payments",
-        "Instantly see which invoices are at risk and which are resolved",
-        "Export data for your accounting team in one click",
-      ],
-      visual: "tracking",
-    },
-    {
-      icon: <GitBranch className="size-6" />,
-      title: "Smart Branching Logic",
-      description: "Adapt to your customer's actions instantly.",
-      bullets: [
-        "Stop all reminders the exact second an invoice is paid",
-        "Route high-value clients to a softer, white-glove follow-up",
-        "Create conditional paths based on payment amount or client tier",
-      ],
-      visual: "branching",
-    },
-    {
-      icon: <LayoutDashboard className="size-6" />,
-      title: "Detailed Reporting & Insights",
-      description: "Turn cash flow into predictable data.",
-      bullets: [
-        "Track collection rates and average time-to-pay across customers",
-        "Identify chronic late payers before they become a liability",
-        "DSO trend analysis over customizable time periods",
-      ],
-      visual: "reporting",
-    },
-  ];
-
-  return (
-    <section className="border-b border-border/40 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 gap-1.5 border-violet-500/20 bg-violet-500/10 text-violet-400">
-            <Layers className="size-3" />
-            Features
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Everything you need to get paid on time.
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Powerful tools that work together to automate your entire accounts
-            receivable workflow.
-          </p>
-        </div>
-
-        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <FeatureCard key={f.title} {...f} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-  bullets,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  bullets: string[];
-  visual: string;
-}) {
-  return (
-    <Card className="border-border/60 bg-card/60 transition-colors hover:border-border">
-      <CardContent className="p-6">
-        <div className="flex size-11 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-          {icon}
-        </div>
-        <h3 className="mt-4 text-base font-semibold">{title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        <ul className="mt-4 space-y-2">
-          {bullets.map((b) => (
-            <li key={b} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-400" />
-              <span>{b}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  HOW IT WORKS — DETAILED TIMELINE                                  */
-/* ------------------------------------------------------------------ */
-function HowItWorks() {
-  const steps = [
-    {
-      day: "Day 0",
-      title: "Invoice Sent",
-      description: "Invoice is generated and sent. DueFlow silently starts tracking the due date.",
-      icon: <FileText className="size-5" />,
-      status: "neutral" as const,
-    },
-    {
-      day: "Day 3",
-      title: "Email Reminder",
-      description: "A polite, automated email reminder is sent with a direct payment link.",
-      icon: <Mail className="size-5" />,
-      status: "blue" as const,
-    },
-    {
-      day: "Day 7",
-      title: "SMS Escalation",
-      description: "No payment detected. A friendly SMS reminder is sent directly to the client's phone.",
-      icon: <Smartphone className="size-5" />,
-      status: "violet" as const,
-    },
-    {
-      day: "Day 14",
-      title: "Voice Escalation",
-      description: "Still unpaid. A professional AI voice call is initiated to resolve the block.",
-      icon: <Phone className="size-5" />,
-      status: "amber" as const,
-    },
-    {
-      day: "Day 15",
-      title: "Payment Received",
-      description: "Payment arrives. DueFlow halts all future reminders and sends an automated receipt.",
-      icon: <CheckCircle2 className="size-5" />,
-      status: "green" as const,
-    },
-  ];
-
-  const statusColors = {
-    neutral: "border-border bg-muted/50 text-muted-foreground",
-    blue: "border-blue-500/30 bg-blue-500/10 text-blue-400",
-    violet: "border-violet-500/30 bg-violet-500/10 text-violet-400",
-    amber: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-    green: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  };
-
-  return (
-    <section className="border-b border-border/40">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 gap-1.5 border-blue-500/20 bg-blue-500/10 text-blue-400">
-            <Timer className="size-3" />
-            Detailed walkthrough
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            The anatomy of a perfect follow-up.
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            See exactly how DueFlow handles an overdue invoice from start to finish.
-          </p>
-        </div>
-
-        <div className="relative mx-auto mt-16 max-w-2xl">
-          {/* Vertical line */}
-          <div className="absolute left-6 top-0 bottom-0 w-px bg-border/60 sm:left-8" />
-
-          <div className="space-y-8">
-            {steps.map((s, i) => (
-              <div key={s.day} className="relative flex gap-4 sm:gap-6">
+        <div className="mt-14 grid gap-5 sm:grid-cols-3">
+          {[
+            {
+              icon: <Clock className="size-5" />,
+              title: "Lost Time",
+              desc: "Hours spent tracking spreadsheets, cross-referencing bank accounts, and drafting follow-up emails.",
+              stat: "15+ hrs/week",
+              color: "bg-red-50 text-red-600",
+            },
+            {
+              icon: <TrendingUp className="size-5" />,
+              title: "Cash Flow Stress",
+              desc: "Growth stalls when your money is stuck in accounts receivable. Payroll becomes a guessing game.",
+              stat: "42 day avg DSO",
+              color: "bg-amber-50 text-amber-600",
+            },
+            {
+              icon: <Bell className="size-5" />,
+              title: "Manual Follow-ups",
+              desc: "The constant, uncomfortable friction of reminding clients to pay what they owe. Again and again.",
+              stat: "6+ touchpoints",
+              color: "bg-orange-50 text-orange-600",
+            },
+          ].map((card) => (
+            <div
+              key={card.title}
+              className="rounded-2xl border border-zinc-200 bg-white p-6"
+            >
+              <div className="flex items-center justify-between mb-5">
                 <div
-                  className={`relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full border sm:size-16 ${statusColors[s.status]}`}
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-xl",
+                    card.color
+                  )}
                 >
-                  {s.icon}
+                  {card.icon}
                 </div>
-                <div className="pt-2 sm:pt-4">
-                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    {s.day}
-                  </span>
-                  <h3 className="mt-1 font-semibold">{s.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                    {s.description}
-                  </p>
-                </div>
+                <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
+                  {card.stat}
+                </span>
               </div>
-            ))}
-          </div>
+              <h3 className="text-[15px] font-semibold text-zinc-900">
+                {card.title}
+              </h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-zinc-500">
+                {card.desc}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -524,61 +738,54 @@ function UseCases() {
     {
       icon: <Users className="size-5" />,
       title: "Freelancers",
-      description:
-        "Protect your personal cash flow. Professional, automated reminders ensure you get paid for your time without the awkwardness.",
+      desc: "Get paid for your time with professional, automated reminders — without the awkward conversations.",
     },
     {
       icon: <Briefcase className="size-5" />,
       title: "Agencies",
-      description:
-        "Stop playing bad cop with your clients. Let DueFlow handle the follow-ups while you focus on the creative work.",
+      desc: "Stop chasing clients. Let DueFlow handle follow-ups while you focus on the creative work.",
     },
     {
       icon: <Globe className="size-5" />,
       title: "SaaS Companies",
-      description:
-        "Recover failed payments and reduce involuntary churn with smart, multi-channel dunning campaigns.",
+      desc: "Recover failed payments and reduce involuntary churn with smart dunning campaigns.",
     },
     {
       icon: <Home className="size-5" />,
       title: "Property Managers",
-      description:
-        "Automate rent collection reminders across hundreds of tenants without lifting a finger.",
+      desc: "Automate rent collection reminders across hundreds of tenants effortlessly.",
     },
     {
       icon: <Building2 className="size-5" />,
       title: "Professional Services",
-      description:
-        "Maintain premium client relationships while ensuring your retainers and hourly bills are settled on time.",
+      desc: "Maintain premium relationships while ensuring retainers and hourly bills are settled on time.",
     },
   ];
 
   return (
-    <section className="border-b border-border/40 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 gap-1.5 border-amber-500/20 bg-amber-500/10 text-amber-400">
-            <Briefcase className="size-3" />
-            Use cases
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Built for modern finance teams and founders.
-          </h2>
-        </div>
+    <section className="py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionLabel>Use cases</SectionLabel>
+        <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+          Built for teams that value their time
+        </h2>
 
-        <div className="mx-auto mt-16 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-14 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cases.map((c) => (
-            <Card key={c.title} className="border-border/60 bg-card/60">
-              <CardContent className="p-6">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
-                  {c.icon}
-                </div>
-                <h3 className="mt-3 font-semibold">{c.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                  {c.description}
-                </p>
-              </CardContent>
-            </Card>
+            <div
+              key={c.title}
+              className="rounded-2xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300"
+            >
+              <div className="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-600">
+                {c.icon}
+              </div>
+              <h3 className="mt-4 text-[15px] font-semibold text-zinc-900">
+                {c.title}
+              </h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-zinc-500">
+                {c.desc}
+              </p>
+            </div>
           ))}
         </div>
       </div>
@@ -587,78 +794,81 @@ function UseCases() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  SOCIAL PROOF                                                      */
+/*  SOCIAL PROOF / METRICS                                            */
 /* ------------------------------------------------------------------ */
 function SocialProof() {
-  const metrics = [
-    { value: "35%", label: "Reduction in DSO", icon: <TrendingUp className="size-5" /> },
-    { value: "15+", label: "Hours saved per week", icon: <Clock className="size-5" /> },
-    { value: "22%", label: "Higher collection rate", icon: <BarChart3 className="size-5" /> },
-  ];
-
-  const testimonials = [
-    {
-      quote:
-        "DueFlow completely removed the friction of asking for money. Our invoices are getting paid two weeks faster, and I haven't sent a manual reminder in months.",
-      name: "Sarah Chen",
-      role: "Founder",
-      company: "Pixel & Co.",
-    },
-    {
-      quote:
-        "The visual builder is incredible. We set up our SMS and email sequences in 20 minutes, and it just runs in the background. It's like having a full-time AR clerk.",
-      name: "Marcus Williams",
-      role: "VP of Finance",
-      company: "ScaleGrid",
-    },
-  ];
-
   return (
-    <section className="border-b border-border/40">
+    <section className="border-t border-zinc-100 bg-zinc-50">
       <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Trusted by businesses that value their time.
-          </h2>
-        </div>
-
-        {/* Metrics */}
-        <div className="mt-16 grid gap-6 sm:grid-cols-3">
-          {metrics.map((m) => (
+        {/* Metrics row */}
+        <div className="grid gap-5 sm:grid-cols-3">
+          {[
+            {
+              value: "35%",
+              label: "Reduction in DSO",
+              icon: <TrendingUp className="size-5" />,
+            },
+            {
+              value: "15+",
+              label: "Hours saved per week",
+              icon: <Clock className="size-5" />,
+            },
+            {
+              value: "22%",
+              label: "Higher collection rate",
+              icon: <BarChart3 className="size-5" />,
+            },
+          ].map((m) => (
             <div
               key={m.label}
-              className="flex flex-col items-center rounded-xl border border-border/60 bg-card/60 p-8 text-center"
+              className="flex flex-col items-center rounded-2xl border border-zinc-200 bg-white p-8 text-center"
             >
-              <div className="flex size-11 items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
+              <div className="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-600">
                 {m.icon}
               </div>
-              <span className="mt-4 text-4xl font-bold tracking-tight">{m.value}</span>
-              <span className="mt-1 text-sm text-muted-foreground">{m.label}</span>
+              <span className="mt-4 text-4xl font-bold tracking-tight text-zinc-900">
+                {m.value}
+              </span>
+              <span className="mt-1 text-[13px] text-zinc-500">{m.label}</span>
             </div>
           ))}
         </div>
 
         {/* Testimonials */}
-        <div className="mt-12 grid gap-6 sm:grid-cols-2">
-          {testimonials.map((t) => (
-            <Card key={t.name} className="border-border/60 bg-card/60">
-              <CardContent className="p-8">
-                <p className="text-sm leading-relaxed text-muted-foreground italic">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-bold">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t.role}, {t.company}
-                    </p>
-                  </div>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          {[
+            {
+              quote:
+                "DueFlow completely removed the friction of asking for money. Our invoices get paid two weeks faster, and I haven't sent a manual reminder in months.",
+              name: "Sarah Chen",
+              role: "Founder, Pixel & Co.",
+            },
+            {
+              quote:
+                "We set up our SMS and email sequences in 20 minutes. It just runs in the background — like having a full-time AR clerk that never takes a break.",
+              name: "Marcus Williams",
+              role: "VP Finance, ScaleGrid",
+            },
+          ].map((t) => (
+            <div
+              key={t.name}
+              className="rounded-2xl border border-zinc-200 bg-white p-6"
+            >
+              <p className="text-[15px] leading-relaxed text-zinc-600">
+                &ldquo;{t.quote}&rdquo;
+              </p>
+              <div className="mt-5 flex items-center gap-3">
+                <div className="flex size-9 items-center justify-center rounded-full bg-zinc-100 text-[13px] font-bold text-zinc-600">
+                  {t.name.charAt(0)}
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <p className="text-[13px] font-medium text-zinc-900">
+                    {t.name}
+                  </p>
+                  <p className="text-[12px] text-zinc-400">{t.role}</p>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -667,107 +877,148 @@ function SocialProof() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  PRICING                                                           */
+/*  PRICING (landing page summary — links to /pricing)                */
 /* ------------------------------------------------------------------ */
 function Pricing() {
   const tiers = [
     {
       name: "Starter",
-      description: "For freelancers and small teams automating their first invoices.",
+      desc: "For freelancers and small teams automating their first invoices.",
+      price: "$49",
+      priceNote: "/month",
       highlights: [
-        "Email & SMS workflows",
-        "Up to 50 invoices/month",
-        "Basic analytics dashboard",
-        "One-click payment links",
+        "500 invoices/month",
+        "Email + SMS workflows",
+        "200 SMS + 15 min voice included",
+        "Basic branching (2 conditions)",
       ],
-      cta: "Start free trial",
+      cta: "Start 14-day free trial",
       featured: false,
     },
     {
-      name: "Growth",
-      description: "For scaling businesses with higher invoice volumes.",
+      name: "Growth+",
+      desc: "Full-featured for growing teams. The default trial plan.",
+      price: "$79",
+      priceNote: "/month",
       highlights: [
-        "Everything in Starter",
-        "Advanced branching logic",
-        "AI voice escalation",
+        "3,000 invoices/month",
+        "Email + SMS + Voice + WhatsApp",
+        "1,500 SMS + 90 min voice included",
+        "Full branching & template library",
         "Custom branding",
-        "Priority support",
       ],
-      cta: "Start free trial",
+      cta: "Start 14-day free trial",
       featured: true,
     },
     {
       name: "Pro",
-      description: "For finance teams needing enterprise-grade control.",
+      desc: "For finance teams needing enterprise-grade control.",
+      price: "$149",
+      priceNote: "/month",
       highlights: [
-        "Everything in Growth",
         "Unlimited invoices",
-        "Custom integrations & API",
-        "Advanced reporting & exports",
-        "Dedicated account manager",
+        "All channels + API & webhooks",
+        "5,000 SMS + 200 min voice included",
+        "Full white-label",
+        "QuickBooks, Xero, Slack integrations",
       ],
-      cta: "Contact sales",
+      cta: "Start 14-day free trial",
       featured: false,
     },
   ];
 
   return (
-    <section className="border-b border-border/40 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 gap-1.5 border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-            <CreditCard className="size-3" />
-            Pricing
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Simple pricing that pays for itself.
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Start free. Upgrade when you need more power.
-          </p>
-        </div>
+    <section id="pricing" className="py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionLabel>Pricing</SectionLabel>
+        <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+          Simple pricing that pays for itself
+        </h2>
+        <p className="mx-auto mt-4 max-w-md text-center text-[15px] text-zinc-500">
+          Start with a 14-day free trial — full Growth+ access, no card
+          required.
+        </p>
 
-        <div className="mt-16 grid gap-6 sm:grid-cols-3">
+        <div className="mt-14 grid gap-5 sm:grid-cols-3">
           {tiers.map((t) => (
-            <Card
+            <div
               key={t.name}
-              className={`relative border-border/60 bg-card/60 ${
-                t.featured ? "border-blue-500/40 shadow-lg shadow-blue-500/5" : ""
-              }`}
+              className={cn(
+                "relative rounded-2xl border p-7 transition-colors",
+                t.featured
+                  ? "border-zinc-900 bg-white shadow-sm"
+                  : "border-zinc-200 bg-white hover:border-zinc-300"
+              )}
             >
               {t.featured && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <span className="rounded-full bg-zinc-900 px-3 py-1 text-[11px] font-semibold text-white">
                     Most popular
-                  </Badge>
+                  </span>
                 </div>
               )}
-              <CardContent className="p-8">
-                <h3 className="text-lg font-bold">{t.name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{t.description}</p>
-                <Separator className="my-6" />
-                <ul className="space-y-3">
-                  {t.highlights.map((h) => (
-                    <li key={h} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
-                      {h}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className={`mt-8 w-full ${
-                    t.featured
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : ""
-                  }`}
-                  variant={t.featured ? "default" : "outline"}
-                  size="lg"
-                >
-                  {t.cta}
-                </Button>
-              </CardContent>
-            </Card>
+
+              <h3 className="text-lg font-semibold text-zinc-900">
+                {t.name}
+              </h3>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                {t.desc}
+              </p>
+
+              <div className="mt-5 flex items-baseline gap-1">
+                <span className="text-3xl font-bold text-zinc-900">
+                  {t.price}
+                </span>
+                <span className="text-[13px] text-zinc-400">
+                  {t.priceNote}
+                </span>
+              </div>
+
+              <div className="my-6 h-px bg-zinc-100" />
+
+              <ul className="space-y-2.5">
+                {t.highlights.map((h) => (
+                  <li
+                    key={h}
+                    className="flex items-center gap-2.5 text-[13px] text-zinc-600"
+                  >
+                    <Check className="size-3.5 shrink-0 text-zinc-400" />
+                    {h}
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href="/sign-in"
+                className={cn(
+                  "mt-7 flex w-full items-center justify-center rounded-full py-2.5 text-[14px] font-medium transition-colors",
+                  t.featured
+                    ? "bg-zinc-900 text-white hover:bg-zinc-800"
+                    : "border border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                )}
+              >
+                {t.cta}
+              </a>
+            </div>
           ))}
+        </div>
+
+        {/* Enterprise + Full comparison link */}
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <p className="text-[14px] text-zinc-500">
+            <span className="font-medium text-zinc-700">Enterprise</span>{" "}
+            — Custom pricing from $499/mo for high-volume teams.{" "}
+            <a href="/pricing" className="underline underline-offset-4 hover:text-zinc-900 transition-colors">
+              Learn more
+            </a>
+          </p>
+          <a
+            href="/pricing"
+            className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
+          >
+            Compare all plans in detail
+            <ArrowRight className="size-3.5" />
+          </a>
         </div>
       </div>
     </section>
@@ -775,59 +1026,52 @@ function Pricing() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  SECURITY & COMPLIANCE                                             */
+/*  SECURITY                                                          */
 /* ------------------------------------------------------------------ */
 function Security() {
   const items = [
     {
       icon: <Lock className="size-5" />,
-      title: "Secure Payment Integrations",
-      description:
-        "Industry-leading payment gateways. We route the payments — we never hold your funds.",
+      title: "Secure Integrations",
+      desc: "Industry-leading gateways. We route payments — never hold your funds.",
     },
     {
       icon: <Shield className="size-5" />,
       title: "Opt-Out Compliance",
-      description:
-        "Built-in TCPA and CAN-SPAM compliance for all SMS and email communications.",
+      desc: "Built-in TCPA and CAN-SPAM compliance for SMS and email.",
     },
     {
       icon: <Receipt className="size-5" />,
       title: "Data Protection",
-      description:
-        "End-to-end encryption ensures your financial data and customer details stay confidential.",
+      desc: "End-to-end encryption for all financial and customer data.",
     },
     {
       icon: <Globe className="size-5" />,
-      title: "US-Focused Reliability",
-      description:
-        "Hosted on secure US-based servers with 99.99% uptime guarantees.",
+      title: "US-Based Reliability",
+      desc: "Hosted on secure US servers with 99.99% uptime guarantee.",
     },
   ];
 
   return (
-    <section className="border-b border-border/40">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 gap-1.5 border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-            <Shield className="size-3" />
-            Security
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Bank-grade security. Fully compliant.
-          </h2>
-        </div>
+    <section className="border-t border-zinc-100 bg-zinc-50">
+      <div className="mx-auto max-w-6xl px-6 py-20">
+        <SectionLabel>Security &amp; compliance</SectionLabel>
+        <h2 className="mt-4 text-center text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+          Bank-grade security. Fully compliant.
+        </h2>
 
-        <div className="mx-auto mt-16 grid max-w-4xl gap-6 sm:grid-cols-2">
+        <div className="mx-auto mt-12 grid max-w-3xl gap-6 sm:grid-cols-2">
           {items.map((item) => (
-            <div key={item.title} className="flex gap-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+            <div key={item.title} className="flex gap-3.5">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
                 {item.icon}
               </div>
               <div>
-                <h3 className="font-semibold">{item.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                  {item.description}
+                <h3 className="text-[14px] font-semibold text-zinc-900">
+                  {item.title}
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">
+                  {item.desc}
                 </p>
               </div>
             </div>
@@ -843,29 +1087,30 @@ function Security() {
 /* ------------------------------------------------------------------ */
 function FinalCta() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-100 w-175 rounded-full bg-blue-500/5 blur-3xl" />
-      </div>
-
-      <div className="relative mx-auto max-w-6xl px-6 py-28">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Stop waiting on your own money.
+    <section className="py-28">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
+            Stop waiting on your own money
           </h2>
-          <p className="mt-6 text-lg text-muted-foreground">
+          <p className="mt-5 text-base text-zinc-500 sm:text-lg">
             Join thousands of businesses automating their accounts receivable
             with DueFlow.
           </p>
-          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button size="lg" className="gap-2 bg-blue-600 text-white hover:bg-blue-700">
-              Start free trial
+          <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <a
+              href="/sign-in"
+              className="flex items-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-zinc-800"
+            >
+              Get started for free
               <ArrowRight className="size-4" />
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2">
-              <Play className="size-4" />
+            </a>
+            <a
+              href="#"
+              className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-7 py-3.5 text-[15px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+            >
               Book a demo
-            </Button>
+            </a>
           </div>
         </div>
       </div>
@@ -874,48 +1119,39 @@ function FinalCta() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  NAVBAR                                                            */
-/* ------------------------------------------------------------------ */
-function Navbar() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-        <div className="flex items-center gap-2 font-bold text-lg">
-          <Zap className="size-5 text-blue-400" />
-          DueFlow
-        </div>
-        <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-          <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-          <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-        </nav>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <a href="/sign-in">Sign in</a>
-          </Button>
-          <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-700" asChild>
-            <a href="/sign-in">Start free trial</a>
-          </Button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  FOOTER                                                            */
 /* ------------------------------------------------------------------ */
 function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-          <div className="flex items-center gap-2 font-bold">
-            <Zap className="size-4 text-blue-400" />
-            DueFlow
+    <footer className="border-t border-zinc-100">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="flex items-center gap-2">
+            <div className="flex size-6 items-center justify-center rounded-md bg-zinc-900">
+              <Zap className="size-3 text-white" />
+            </div>
+            <span className="text-[14px] font-semibold text-zinc-900">
+              DueFlow
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} DueFlow, Inc. All rights reserved.
+
+          <div className="flex items-center gap-6 text-[13px] text-zinc-400">
+            <a href="/pricing" className="hover:text-zinc-600 transition-colors">
+              Pricing
+            </a>
+            <a href="#" className="hover:text-zinc-600 transition-colors">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-zinc-600 transition-colors">
+              Terms
+            </a>
+            <a href="#" className="hover:text-zinc-600 transition-colors">
+              Support
+            </a>
+          </div>
+
+          <p className="text-[12px] text-zinc-400">
+            &copy; {new Date().getFullYear()} DueFlow, Inc.
           </p>
         </div>
       </div>
@@ -924,27 +1160,34 @@ function Footer() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  LANDING PAGE — COMPOSED                                           */
+/*  SHARED                                                            */
+/* ------------------------------------------------------------------ */
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-center text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+      {children}
+    </p>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  LANDING PAGE — EXPORT                                             */
 /* ------------------------------------------------------------------ */
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-white text-zinc-900 antialiased">
       <Navbar />
       <main>
         <Hero />
+        <TrustBar />
+        <Capabilities />
         <Problem />
-        <Solution />
-        <div id="features">
-          <Features />
-        </div>
-        <div id="how-it-works">
-          <HowItWorks />
-        </div>
+        <FeaturesAccordion />
+        <FeaturesGrid />
+        <HowItWorks />
         <UseCases />
         <SocialProof />
-        <div id="pricing">
-          <Pricing />
-        </div>
+        <Pricing />
         <Security />
         <FinalCta />
       </main>

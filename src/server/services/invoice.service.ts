@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 
 import { env } from "@/env";
 import { db } from "@/server/db";
@@ -27,7 +27,7 @@ export async function generateInvoiceForPlan(input: {
 
   const invoiceId = crypto.randomUUID();
   const payToken = crypto.randomUUID();
-  const dueDate = input.periodEnd;
+  const dueDate = new Date(`${input.periodEnd}T00:00:00.000Z`);
 
   const payLinkUrl = `${env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/pay/i/${invoiceId}?token=${payToken}`;
 
@@ -88,6 +88,9 @@ export async function markInvoicePaid(input: {
 }
 
 export async function markOverdueInvoices(orgId: string, onDate: string) {
+  const onDateStart = new Date(`${onDate}T00:00:00.000Z`);
+  const onDateEnd = new Date(`${onDate}T23:59:59.999Z`);
+
   await db
     .update(invoices)
     .set({
@@ -98,7 +101,10 @@ export async function markOverdueInvoices(orgId: string, onDate: string) {
       and(
         eq(invoices.orgId, orgId),
         eq(invoices.status, "DUE"),
-        eq(invoices.dueDate, onDate)
+        and(
+          gte(invoices.dueDate, onDateStart),
+          lte(invoices.dueDate, onDateEnd)
+        )
       )
     );
 }

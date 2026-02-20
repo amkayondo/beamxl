@@ -11,6 +11,7 @@ export * from "./automation";
 export * from "./conversations";
 export * from "./logs";
 export * from "./integrations";
+export * from "./org-integrations";
 export * from "./webhook-events";
 export * from "./flows";
 export * from "./compliance";

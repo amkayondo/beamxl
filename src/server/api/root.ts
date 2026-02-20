@@ -2,6 +2,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { auditRouter } from "@/server/api/routers/audit";
 import { automationRouter } from "@/server/api/routers/automation";
 import { callsRouter } from "@/server/api/routers/calls";
+import { billingRouter } from "@/server/api/routers/billing";
 import { complianceRouter } from "@/server/api/routers/compliance";
 import { contactsRouter } from "@/server/api/routers/contacts";
 import { conversationsRouter } from "@/server/api/routers/conversations";
@@ -32,6 +33,7 @@ export const appRouter = createTRPCRouter({
   reports: reportsRouter,
   settings: settingsRouter,
   calls: callsRouter,
+  billing: billingRouter,
   audit: auditRouter,
   tags: tagsRouter,
   templates: templatesRouter,

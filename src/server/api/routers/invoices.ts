@@ -9,6 +9,15 @@ import {
 import { invoices } from "@/server/db/schema";
 import { writeAuditLog } from "@/server/services/audit.service";
 import { generateInvoiceForPlan } from "@/server/services/invoice.service";
+import { createCheckoutForInvoice } from "@/server/services/payment.service";
+
+function startOfUtcDay(value: string) {
+  return new Date(`${value}T00:00:00.000Z`);
+}
+
+function endOfUtcDay(value: string) {
+  return new Date(`${value}T23:59:59.999Z`);
+}
 
 export const invoicesRouter = createTRPCRouter({
   generateForPlan: adminProcedure
@@ -55,8 +64,8 @@ export const invoicesRouter = createTRPCRouter({
       const whereClause = and(
         eq(invoices.orgId, input.orgId),
         input.status ? eq(invoices.status, input.status) : undefined,
-        input.dueFrom ? gte(invoices.dueDate, input.dueFrom) : undefined,
-        input.dueTo ? lte(invoices.dueDate, input.dueTo) : undefined
+        input.dueFrom ? gte(invoices.dueDate, startOfUtcDay(input.dueFrom)) : undefined,
+        input.dueTo ? lte(invoices.dueDate, endOfUtcDay(input.dueTo)) : undefined
       );
 
       const [items, countRows] = await Promise.all([
@@ -79,6 +88,25 @@ export const invoicesRouter = createTRPCRouter({
       return {
         items,
         total: Number(countRows[0]?.count ?? 0),
+      };
+    }),
+
+  createCheckoutSession: adminProcedure
+    .input(
+      z.object({
+        orgId: z.string().min(1),
+        invoiceId: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const checkout = await createCheckoutForInvoice({
+        orgId: input.orgId,
+        invoiceId: input.invoiceId,
+      });
+
+      return {
+        url: checkout.checkoutUrl,
+        providerIntentId: checkout.providerIntentId,
       };
     }),
 

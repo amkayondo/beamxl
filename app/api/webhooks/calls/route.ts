@@ -29,8 +29,11 @@ export async function POST(request: Request) {
   try {
     await db.insert(webhookEvents).values({
       provider: twilioCallAdapter.provider,
+      eventId: `${twilioCallAdapter.provider}:${event.providerEventId}`,
+      eventType: "CALL_STATUS",
       providerEventId: event.providerEventId,
       orgId,
+      accountId: null,
       signatureVerified,
       status: "RECEIVED",
       payload: event.raw as Record<string, unknown>,

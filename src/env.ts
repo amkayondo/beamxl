@@ -19,6 +19,10 @@ export const env = createEnv({
 
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    STRIPE_CONNECT_WEBHOOK_SECRET: z.string().optional(),
+    STRIPE_CONNECT_CLIENT_ID: z.string().optional(),
+    STRIPE_SUBSCRIPTION_PRICE_ID: z.string().optional(),
+    APP_URL: z.string().url().optional(),
 
     BIRD_API_KEY: z.string().optional(),
     BIRD_WEBHOOK_SECRET: z.string().optional(),
@@ -34,6 +38,7 @@ export const env = createEnv({
 
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   },
 
   runtimeEnv: {
@@ -50,12 +55,18 @@ export const env = createEnv({
 
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+    STRIPE_CONNECT_CLIENT_ID: process.env.STRIPE_CONNECT_CLIENT_ID,
+    STRIPE_SUBSCRIPTION_PRICE_ID: process.env.STRIPE_SUBSCRIPTION_PRICE_ID,
+    APP_URL: process.env.APP_URL,
 
     BIRD_API_KEY: process.env.BIRD_API_KEY,
     BIRD_WEBHOOK_SECRET: process.env.BIRD_WEBHOOK_SECRET,
 
     ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 
     INTEGRATION_SECRET_STRATEGY: process.env.INTEGRATION_SECRET_STRATEGY,
 

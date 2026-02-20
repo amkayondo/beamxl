@@ -11,6 +11,7 @@ import { messageTemplates } from "./templates";
 import { conversations } from "./conversations";
 import { auditLogs, callLogs, messageLogs } from "./logs";
 import { integrationSettings } from "./integrations";
+import { orgIntegrations } from "./org-integrations";
 import { webhookEvents } from "./webhook-events";
 import { flowRuns, flows } from "./flows";
 import {
@@ -57,6 +58,7 @@ export const orgRelations = relations(orgs, ({ one, many }) => ({
   callLogs: many(callLogs),
   auditLogs: many(auditLogs),
   integrationSettings: many(integrationSettings),
+  orgIntegrations: many(orgIntegrations),
   webhookEvents: many(webhookEvents),
   flows: many(flows),
   flowRuns: many(flowRuns),
@@ -253,6 +255,13 @@ export const integrationSettingsRelations = relations(
     }),
   })
 );
+
+export const orgIntegrationsRelations = relations(orgIntegrations, ({ one }) => ({
+  org: one(orgs, {
+    fields: [orgIntegrations.orgId],
+    references: [orgs.id],
+  }),
+}));
 
 export const webhookEventsRelations = relations(webhookEvents, ({ one }) => ({
   org: one(orgs, {

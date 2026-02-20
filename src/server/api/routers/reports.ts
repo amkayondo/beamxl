@@ -7,6 +7,14 @@ import {
 } from "@/server/api/trpc";
 import { invoices } from "@/server/db/schema";
 
+function startOfUtcDay(value: string) {
+  return new Date(`${value}T00:00:00.000Z`);
+}
+
+function endOfUtcDay(value: string) {
+  return new Date(`${value}T23:59:59.999Z`);
+}
+
 function csvEscape(value: string | number | null | undefined) {
   if (value === null || value === undefined) return "";
   const stringValue = String(value);
@@ -208,8 +216,8 @@ export const reportsRouter = createTRPCRouter({
       const whereClause = and(
         eq(invoices.orgId, input.orgId),
         input.status ? eq(invoices.status, input.status) : undefined,
-        input.dueFrom ? gte(invoices.dueDate, input.dueFrom) : undefined,
-        input.dueTo ? lte(invoices.dueDate, input.dueTo) : undefined
+        input.dueFrom ? gte(invoices.dueDate, startOfUtcDay(input.dueFrom)) : undefined,
+        input.dueTo ? lte(invoices.dueDate, endOfUtcDay(input.dueTo)) : undefined
       );
 
       const rows = await ctx.db.query.invoices.findMany({
@@ -236,7 +244,7 @@ export const reportsRouter = createTRPCRouter({
           row.id,
           row.invoiceNumber,
           row.contact?.name,
-          row.dueDate,
+          row.dueDate.toISOString(),
           row.status,
           row.amountDueMinor,
           row.amountPaidMinor,

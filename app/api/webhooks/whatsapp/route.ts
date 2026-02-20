@@ -39,8 +39,11 @@ export async function POST(request: Request) {
     try {
       await db.insert(webhookEvents).values({
         provider: "BIRD",
+        eventId: `BIRD:${event.providerEventId}`,
+        eventType: event.type,
         providerEventId: event.providerEventId,
         orgId,
+        accountId: null,
         signatureVerified: true,
         status: "RECEIVED",
         payload: event as unknown as Record<string, unknown>,

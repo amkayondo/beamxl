@@ -97,6 +97,7 @@ export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
         isActive(`/${orgSlug}/settings`),
       items: [
         { title: "General", url: `/${orgSlug}/settings` },
+        { title: "Billing", url: `/${orgSlug}/settings/billing` },
         { title: "Compliance", url: `/${orgSlug}/settings/compliance` },
       ],
     },

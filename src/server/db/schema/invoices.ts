@@ -28,7 +28,7 @@ export const invoices = createTable(
     invoiceNumber: d.text("invoice_number").notNull(),
     periodStart: d.date("period_start", { mode: "string" }).notNull(),
     periodEnd: d.date("period_end", { mode: "string" }).notNull(),
-    dueDate: d.date("due_date", { mode: "string" }).notNull(),
+    dueDate: d.timestamp("due_date", { withTimezone: true }).notNull(),
     amountDueMinor: d.integer("amount_due_minor").notNull(),
     amountPaidMinor: d.integer("amount_paid_minor").notNull().default(0),
     currency: d.text("currency").notNull().default("USD"),
@@ -38,6 +38,8 @@ export const invoices = createTable(
       .notNull()
       .$defaultFn(() => crypto.randomUUID()),
     payLinkUrl: d.text("pay_link_url"),
+    stripeCheckoutSessionId: d.text("stripe_checkout_session_id"),
+    stripePaymentIntentId: d.text("stripe_payment_intent_id"),
     lastReminderAt: d.timestamp("last_reminder_at", { withTimezone: true }),
     paidAt: d.timestamp("paid_at", { withTimezone: true }),
     createdAt: d
@@ -52,8 +54,11 @@ export const invoices = createTable(
   }),
   (t) => [
     uniqueIndex("beamflow_invoices_public_pay_token_uidx").on(t.publicPayToken),
-    index("beamflow_invoices_org_status_idx").on(t.orgId, t.status),
-    index("beamflow_invoices_org_due_date_idx").on(t.orgId, t.dueDate),
+    index("beamflow_invoices_org_status_due_date_idx").on(
+      t.orgId,
+      t.status,
+      t.dueDate
+    ),
     index("beamflow_invoices_contact_due_date_idx").on(t.contactId, t.dueDate),
   ]
 );

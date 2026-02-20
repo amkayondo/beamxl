@@ -16,6 +16,16 @@ export const orgs = createTable(
     name: d.text("name").notNull(),
     defaultCurrency: d.text("default_currency").notNull().default("USD"),
     timezone: d.text("timezone").notNull().default("UTC"),
+    stripeCustomerId: d.text("stripe_customer_id"),
+    stripeSubscriptionId: d.text("stripe_subscription_id"),
+    stripeSubscriptionStatus: d.text("stripe_subscription_status"),
+    stripePriceId: d.text("stripe_price_id"),
+    stripeCurrentPeriodEnd: d.timestamp("stripe_current_period_end", {
+      withTimezone: true,
+    }),
+    stripeSubscriptionUpdatedAt: d.timestamp("stripe_subscription_updated_at", {
+      withTimezone: true,
+    }),
     createdByUserId: d
       .text("created_by_user_id")
       .notNull()

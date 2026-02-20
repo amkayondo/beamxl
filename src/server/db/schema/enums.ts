@@ -100,6 +100,15 @@ export const providerKindEnum = pgEnum("provider_kind", [
   "VOICE",
 ]);
 
+export const integrationProviderEnum = pgEnum("integration_provider", [
+  "stripe",
+]);
+
+export const integrationConnectionStatusEnum = pgEnum(
+  "integration_connection_status",
+  ["connected", "disconnected"]
+);
+
 export const languageCodeEnum = pgEnum("language_code", ["EN", "RW", "LG"]);
 
 export const auditActorTypeEnum = pgEnum("audit_actor_type", [

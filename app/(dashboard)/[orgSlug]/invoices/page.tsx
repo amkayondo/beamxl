@@ -14,6 +14,14 @@ import {
 import { requireOrgBySlug } from "@/lib/server-org";
 import { api } from "@/trpc/server";
 
+function formatDueDate(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  }).format(value);
+}
+
 export default async function InvoicesPage({
   params,
 }: {
@@ -63,7 +71,7 @@ export default async function InvoicesPage({
                     </Link>
                   </TableCell>
                   <TableCell>{invoice.contact?.name ?? "-"}</TableCell>
-                  <TableCell>{invoice.dueDate}</TableCell>
+                  <TableCell>{formatDueDate(invoice.dueDate)}</TableCell>
                   <TableCell>
                     <Badge>{invoice.status}</Badge>
                   </TableCell>

@@ -9,8 +9,10 @@ import {
   enqueueReminderJob,
 } from "@/server/jobs/producers";
 
-function dayDiff(fromIsoDate: string, to: Date) {
-  const from = new Date(`${fromIsoDate}T00:00:00.000Z`);
+function dayDiff(fromDate: Date, to: Date) {
+  const from = new Date(
+    Date.UTC(fromDate.getUTCFullYear(), fromDate.getUTCMonth(), fromDate.getUTCDate())
+  );
   const toDate = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate()));
   return Math.floor((toDate.getTime() - from.getTime()) / (24 * 60 * 60 * 1000));
 }

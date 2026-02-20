@@ -13,7 +13,7 @@ export const paymentsRouter = createTRPCRouter({
       z.object({
         orgId: z.string().min(1),
         invoiceId: z.string().min(1),
-        returnUrl: z.string().url(),
+        returnUrl: z.string().url().optional(),
       })
     )
     .mutation(async ({ input }) => {

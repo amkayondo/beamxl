@@ -403,7 +403,7 @@ export async function batchInsertInvoices(
         invoiceNumber: invNumber,
         periodStart: row.dueDate, // default period to dueDate
         periodEnd: row.dueDate,
-        dueDate: row.dueDate,
+        dueDate: new Date(`${row.dueDate}T00:00:00.000Z`),
         amountDueMinor: row.amountMinor,
         amountPaidMinor: 0,
         currency: row.currency ?? "USD",

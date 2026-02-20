@@ -29,6 +29,10 @@ function formatAmount(amountMinor: number, currency: string) {
   }).format(amountMinor / 100);
 }
 
+function formatDueDate(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
 function renderTemplate(body: string, vars: Record<string, string>) {
   return Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v), body);
 }
@@ -73,7 +77,7 @@ export async function sendReminderForInvoice(input: {
     name: invoice.contact.name,
     amount: formatAmount(invoice.amountDueMinor, invoice.currency),
     period: `${invoice.periodStart} - ${invoice.periodEnd}`,
-    dueDate: invoice.dueDate,
+    dueDate: formatDueDate(invoice.dueDate),
     payLink: invoice.payLinkUrl ?? "",
   };
 

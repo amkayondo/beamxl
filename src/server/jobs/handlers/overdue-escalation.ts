@@ -7,7 +7,7 @@ export async function handleOverdueEscalationJob(payload: {
   orgId: string;
   runDate: string;
 }) {
-  const targetDate = payload.runDate;
+  const targetDate = new Date(`${payload.runDate}T00:00:00.000Z`);
 
   await db
     .update(invoices)

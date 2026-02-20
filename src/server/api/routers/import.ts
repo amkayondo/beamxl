@@ -85,7 +85,7 @@ export const importRouter = createTRPCRouter({
             contactName: z.string().optional(),
             invoiceNumber: z.string().min(1),
             amount: z.number().positive(),
-            dueDate: z.string().min(1),
+            dueDate: z.string().date(),
             currency: z.string().optional(),
           }),
         ),

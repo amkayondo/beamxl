@@ -4,6 +4,14 @@ import { Input } from "@/components/ui/input";
 import { requireOrgBySlug } from "@/lib/server-org";
 import { api } from "@/trpc/server";
 
+function formatDueDate(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  }).format(value);
+}
+
 export default async function InvoiceDetailPage({
   params,
 }: {
@@ -36,7 +44,7 @@ export default async function InvoiceDetailPage({
           <p>Status: {invoice.status}</p>
           <p>Amount Due: {invoice.amountDueMinor}</p>
           <p>Amount Paid: {invoice.amountPaidMinor}</p>
-          <p>Due Date: {invoice.dueDate}</p>
+          <p>Due Date: {formatDueDate(invoice.dueDate)}</p>
           <p>Contact: {invoice.contact?.name ?? "-"}</p>
         </CardContent>
       </Card>
