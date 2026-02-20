@@ -1,6 +1,6 @@
-# BeamFlow
+# DueFlow
 
-BeamFlow is a multi-tenant payment follow-up automation SaaS built on the T3 stack.
+DueFlow is a multi-tenant payment follow-up automation SaaS built on the T3 stack.
 
 ## Stack
 
@@ -50,7 +50,13 @@ bun run dev:worker
 - Auth: `/sign-in`, `/verify`
 - Dashboard: `/{orgSlug}/overview`
 - Public payment page: `/pay/i/{invoiceId}`
+- Billing settings: `/{orgSlug}/settings/billing`
+- Stripe Connect OAuth:
+  - `/api/stripe/connect`
+  - `/api/stripe/callback`
 - Webhooks:
+  - `/api/webhooks/stripe/platform`
+  - `/api/webhooks/stripe/connect`
   - `/api/webhooks/payments`
   - `/api/webhooks/whatsapp`
   - `/api/webhooks/calls`
@@ -67,6 +73,6 @@ This implementation ships core MVP flows:
 
 - Multi-org auth + org membership RBAC
 - Contacts, plans, invoices, conversations, settings APIs
-- Pay-link flow with Stripe adapter
-- Payment + messaging webhook handlers with idempotency table
+- Dual-context Stripe flow (platform billing + connected-account invoice checkout)
+- Split platform/connect Stripe webhooks with idempotency table
 - Reminder/receipt queue scaffolding and worker runtime

@@ -2,10 +2,9 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
-import { env } from "@/env";
 import { db } from "@/server/db";
 import { orgs } from "@/server/db/schema";
-import { requireStripeClient } from "@/server/stripe";
+import { requireStripeClient, requireStripeWebhookSecret } from "@/server/stripe";
 import { writeAuditLog } from "@/server/services/audit.service";
 import {
   getStripeAccountContext,
@@ -108,9 +107,17 @@ export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("stripe-signature") ?? "";
 
-  if (!env.STRIPE_WEBHOOK_SECRET) {
+  let webhookSecret: string;
+  try {
+    webhookSecret = requireStripeWebhookSecret("platform");
+  } catch (error) {
     return NextResponse.json(
-      { error: "STRIPE_WEBHOOK_SECRET is not configured" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Platform Stripe webhook secret is not configured",
+      },
       { status: 500 }
     );
   }
@@ -120,7 +127,7 @@ export async function POST(request: Request) {
     event = await verifyAndConstructStripeEvent({
       rawBody,
       signature,
-      webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+      webhookSecret,
     });
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });

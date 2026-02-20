@@ -9,7 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
-  title: "BeamFlow",
+  title: "DueFlow",
   description: "Payment follow-up automation platform",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

@@ -69,8 +69,8 @@ export const auth = betterAuth({
         await resend.emails.send({
           from: env.RESEND_FROM_EMAIL,
           to: email,
-          subject: "Your BeamFlow sign-in link",
-          html: `<p>Sign in to BeamFlow:</p><p><a href=\"${url}\">Open secure sign-in link</a></p><p>This link expires in 15 minutes.</p>`,
+          subject: "Your DueFlow sign-in link",
+          html: `<p>Sign in to DueFlow:</p><p><a href=\"${url}\">Open secure sign-in link</a></p><p>This link expires in 15 minutes.</p>`,
         });
       },
     }),

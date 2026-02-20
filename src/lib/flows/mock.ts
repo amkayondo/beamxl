@@ -9,7 +9,8 @@ import type {
   TriggerType,
 } from "@/lib/flows/types";
 
-export const FLOW_STORAGE_KEY = "beamflow_flows";
+export const FLOW_STORAGE_KEY = "dueflow_flows";
+export const LEGACY_FLOW_STORAGE_KEY = "beamflow_flows";
 export const FLOW_STORAGE_VERSION = 1;
 export const FLOW_MOCK_EDITOR = "You";
 

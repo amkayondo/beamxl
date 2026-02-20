@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
-import { env } from "@/env";
 import { db } from "@/server/db";
 import { enqueueReceiptJob } from "@/server/jobs/producers";
+import { requireStripeWebhookSecret } from "@/server/stripe";
 import { createNotification } from "@/server/services/notification.service";
 import { recordPaymentFromWebhook } from "@/server/services/payment.service";
 import { writeAuditLog } from "@/server/services/audit.service";
@@ -64,11 +64,18 @@ function parseInvoiceContext(event: Stripe.Event) {
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("stripe-signature") ?? "";
-  const connectSecret = env.STRIPE_CONNECT_WEBHOOK_SECRET;
 
-  if (!connectSecret) {
+  let connectSecret: string;
+  try {
+    connectSecret = requireStripeWebhookSecret("connect");
+  } catch (error) {
     return NextResponse.json(
-      { error: "Stripe Connect webhook secret is not configured" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Stripe Connect webhook secret is not configured",
+      },
       { status: 500 }
     );
   }

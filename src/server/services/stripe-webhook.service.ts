@@ -52,31 +52,41 @@ export async function registerStripeWebhookEvent(input: {
   orgId?: string | null;
   payload: unknown;
 }) {
+  const inserted = await db
+    .insert(webhookEvents)
+    .values({
+      provider: input.provider,
+      eventId: input.event.id,
+      providerEventId: input.event.id,
+      eventType: input.eventType,
+      accountId: input.accountId ?? null,
+      orgId: input.orgId ?? null,
+      signatureVerified: true,
+      status: "RECEIVED",
+      payload: input.payload as Record<string, unknown>,
+    })
+    .onConflictDoNothing({
+      target: webhookEvents.eventId,
+    })
+    .returning({ id: webhookEvents.id });
+
+  if (inserted.length > 0) {
+    return { duplicate: false, shouldProcess: true, existing: null };
+  }
+
   const existing = await db.query.webhookEvents.findFirst({
     where: (w, { eq }) => eq(w.eventId, input.event.id),
   });
 
-  if (existing) {
-    return {
-      duplicate: true,
-      shouldProcess: shouldProcessStripeWebhookEvent(existing),
-      existing,
-    };
+  if (!existing) {
+    throw new Error("Unable to register Stripe webhook event");
   }
 
-  await db.insert(webhookEvents).values({
-    provider: input.provider,
-    eventId: input.event.id,
-    providerEventId: input.event.id,
-    eventType: input.eventType,
-    accountId: input.accountId ?? null,
-    orgId: input.orgId ?? null,
-    signatureVerified: true,
-    status: "RECEIVED",
-    payload: input.payload as Record<string, unknown>,
-  });
-
-  return { duplicate: false, shouldProcess: true, existing: null };
+  return {
+    duplicate: true,
+    shouldProcess: shouldProcessStripeWebhookEvent(existing),
+    existing,
+  };
 }
 
 export async function markStripeWebhookProcessed(input: {

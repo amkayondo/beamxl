@@ -12,4 +12,4 @@ for (const worker of workers) {
   });
 }
 
-console.log(`[worker] BeamFlow workers running (${workers.length})`);
+console.log(`[worker] DueFlow workers running (${workers.length})`);

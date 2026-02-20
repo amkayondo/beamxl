@@ -44,7 +44,7 @@ export class StripePaymentAdapter implements PaymentAdapter {
             currency: input.currency.toLowerCase(),
             unit_amount: input.amountMinor,
             product_data: {
-              name: `BeamFlow Invoice ${input.invoiceId}`,
+              name: `DueFlow Invoice ${input.invoiceId}`,
             },
           },
         },

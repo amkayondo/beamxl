@@ -7,7 +7,9 @@ import { twilioCallAdapter } from "@/server/adapters/calls/twilio.adapter";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const orgId = request.headers.get("x-beamflow-org-id");
+  const orgId =
+    request.headers.get("x-dueflow-org-id") ??
+    request.headers.get("x-beamflow-org-id");
   const signature = request.headers.get("x-signature") ?? "";
 
   if (!orgId) {

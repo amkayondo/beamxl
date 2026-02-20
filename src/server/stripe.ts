@@ -16,6 +16,39 @@ export function requireStripeClient() {
   return stripe;
 }
 
+export function requireStripeConnectClientId() {
+  if (!env.STRIPE_CONNECT_CLIENT_ID) {
+    throw new Error("STRIPE_CONNECT_CLIENT_ID is not configured");
+  }
+
+  return env.STRIPE_CONNECT_CLIENT_ID;
+}
+
+export function requireStripeWebhookSecret(kind: "platform" | "connect") {
+  const secret =
+    kind === "platform"
+      ? env.STRIPE_WEBHOOK_SECRET
+      : env.STRIPE_CONNECT_WEBHOOK_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      kind === "platform"
+        ? "STRIPE_WEBHOOK_SECRET is not configured"
+        : "STRIPE_CONNECT_WEBHOOK_SECRET is not configured"
+    );
+  }
+
+  return secret;
+}
+
+export function requireStripeSubscriptionPriceId() {
+  if (!env.STRIPE_SUBSCRIPTION_PRICE_ID) {
+    throw new Error("STRIPE_SUBSCRIPTION_PRICE_ID is not configured");
+  }
+
+  return env.STRIPE_SUBSCRIPTION_PRICE_ID;
+}
+
 export function getAppUrl() {
   return env.APP_URL ?? env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 }

@@ -22,7 +22,7 @@ export type PaletteItem = {
   keywords: string[];
 };
 
-export const FLOW_NODE_DND_MIME = "application/beamflow-node-kind";
+export const FLOW_NODE_DND_MIME = "application/dueflow-node-kind";
 
 export const PALETTE_ITEMS: PaletteItem[] = [
   {

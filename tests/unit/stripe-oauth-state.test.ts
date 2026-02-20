@@ -30,7 +30,7 @@ let verifySignedStripeOAuthState: (input: {
 
 describe("stripe oauth state", () => {
   beforeAll(async () => {
-    process.env.DATABASE_URL ??= "postgresql://postgres:password@localhost:5432/beamflow";
+    process.env.DATABASE_URL ??= "postgresql://postgres:password@localhost:5432/dueflow";
     process.env.BETTER_AUTH_SECRET = "oauth-state-secret";
     process.env.STRIPE_SECRET_KEY = "sk_test_123";
 

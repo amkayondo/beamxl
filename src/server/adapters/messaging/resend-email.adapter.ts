@@ -19,7 +19,7 @@ export const resendEmailAdapter = {
     }
 
     const fromEmail =
-      process.env.RESEND_FROM_EMAIL ?? "noreply@beamflow.app";
+      process.env.RESEND_FROM_EMAIL ?? "noreply@dueflow.app";
 
     const result = await resend.emails.send({
       from: fromEmail,

@@ -1,4 +1,3 @@
-import { and, eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -8,9 +7,25 @@ import { orgIntegrations } from "@/server/db/schema";
 import { requireStripeClient } from "@/server/stripe";
 import { writeAuditLog } from "@/server/services/audit.service";
 import {
+  LEGACY_STRIPE_OAUTH_STATE_COOKIE,
   STRIPE_OAUTH_STATE_COOKIE,
   verifySignedStripeOAuthState,
 } from "@/server/services/stripe-oauth-state";
+
+function clearOauthStateCookies(response: NextResponse) {
+  response.cookies.set({
+    name: STRIPE_OAUTH_STATE_COOKIE,
+    value: "",
+    path: "/",
+    maxAge: 0,
+  });
+  response.cookies.set({
+    name: LEGACY_STRIPE_OAUTH_STATE_COOKIE,
+    value: "",
+    path: "/",
+    maxAge: 0,
+  });
+}
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -21,8 +36,12 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
+  const connectError = url.searchParams.get("error");
+
   const cookieStore = await cookies();
-  const cookieValue = cookieStore.get(STRIPE_OAUTH_STATE_COOKIE)?.value;
+  const cookieValue =
+    cookieStore.get(STRIPE_OAUTH_STATE_COOKIE)?.value ??
+    cookieStore.get(LEGACY_STRIPE_OAUTH_STATE_COOKIE)?.value;
 
   const verification = verifySignedStripeOAuthState({
     cookieValue,
@@ -30,14 +49,41 @@ export async function GET(request: Request) {
     userId: session.user.id,
   });
 
-  if (!code || !verification.ok) {
+  if (!verification.ok) {
     const response = NextResponse.redirect(new URL("/?stripe_connect_error=state", request.url));
-    response.cookies.set({
-      name: STRIPE_OAUTH_STATE_COOKIE,
-      value: "",
-      path: "/",
-      maxAge: 0,
-    });
+    clearOauthStateCookies(response);
+    return response;
+  }
+
+  if (connectError || !code) {
+    const response = NextResponse.redirect(
+      new URL(
+        `/${verification.payload.orgSlug}/settings/billing?connected=0&reason=${encodeURIComponent(connectError ?? "missing_code")}`,
+        request.url
+      )
+    );
+    clearOauthStateCookies(response);
+    return response;
+  }
+
+  const membership = await db.query.orgMembers.findFirst({
+    where: (m, { and, eq, isNull }) =>
+      and(
+        eq(m.orgId, verification.payload.orgId),
+        eq(m.userId, session.user.id),
+        eq(m.status, "ACTIVE"),
+        isNull(m.deletedAt)
+      ),
+  });
+
+  if (!membership || membership.role === "MEMBER") {
+    const response = NextResponse.redirect(
+      new URL(
+        `/${verification.payload.orgSlug}/settings/billing?connected=0&reason=forbidden`,
+        request.url
+      )
+    );
+    clearOauthStateCookies(response);
     return response;
   }
 
@@ -50,40 +96,30 @@ export async function GET(request: Request) {
     });
 
     const accountId = token.stripe_user_id;
-    if (!accountId) {
-      throw new Error("Stripe did not return an account id");
+    if (!accountId || !accountId.startsWith("acct_")) {
+      throw new Error("Stripe did not return a valid connected account id");
     }
 
     const payload = verification.payload;
-    const existing = await db.query.orgIntegrations.findFirst({
-      where: (i, { and, eq }) =>
-        and(eq(i.orgId, payload.orgId), eq(i.provider, "stripe")),
-    });
-
-    if (existing) {
-      await db
-        .update(orgIntegrations)
-        .set({
-          status: "connected",
-          stripeAccountId: accountId,
-          stripePublishableKey: token.stripe_publishable_key ?? null,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(orgIntegrations.orgId, payload.orgId),
-            eq(orgIntegrations.provider, "stripe")
-          )
-        );
-    } else {
-      await db.insert(orgIntegrations).values({
+    const upserted = await db
+      .insert(orgIntegrations)
+      .values({
         orgId: payload.orgId,
         provider: "stripe",
         status: "connected",
         stripeAccountId: accountId,
-        stripePublishableKey: token.stripe_publishable_key ?? null,
-      });
-    }
+        stripePublishableKey: null,
+      })
+      .onConflictDoUpdate({
+        target: [orgIntegrations.orgId, orgIntegrations.provider],
+        set: {
+          status: "connected",
+          stripeAccountId: accountId,
+          stripePublishableKey: null,
+          updatedAt: new Date(),
+        },
+      })
+      .returning({ id: orgIntegrations.id });
 
     await writeAuditLog({
       orgId: payload.orgId,
@@ -91,7 +127,7 @@ export async function GET(request: Request) {
       actorUserId: session.user.id,
       action: "STRIPE_CONNECT_CONNECTED",
       entityType: "OrgIntegration",
-      entityId: existing?.id ?? payload.orgId,
+      entityId: upserted[0]?.id ?? payload.orgId,
       after: {
         stripeAccountId: accountId,
       },
@@ -100,24 +136,14 @@ export async function GET(request: Request) {
     const response = NextResponse.redirect(
       new URL(`/${payload.orgSlug}/settings/billing?connected=1`, request.url)
     );
-    response.cookies.set({
-      name: STRIPE_OAUTH_STATE_COOKIE,
-      value: "",
-      path: "/",
-      maxAge: 0,
-    });
+    clearOauthStateCookies(response);
     return response;
   } catch {
     const payload = verification.payload;
     const response = NextResponse.redirect(
       new URL(`/${payload.orgSlug}/settings/billing?connected=0`, request.url)
     );
-    response.cookies.set({
-      name: STRIPE_OAUTH_STATE_COOKIE,
-      value: "",
-      path: "/",
-      maxAge: 0,
-    });
+    clearOauthStateCookies(response);
     return response;
   }
 }

@@ -17,7 +17,9 @@ export async function POST(request: Request) {
     request.headers.get("x-signature") ??
     request.headers.get("x-bird-signature") ??
     "";
-  const orgId = request.headers.get("x-beamflow-org-id");
+  const orgId =
+    request.headers.get("x-dueflow-org-id") ??
+    request.headers.get("x-beamflow-org-id");
 
   if (!orgId) {
     return NextResponse.json({ error: "Missing org context" }, { status: 400 });

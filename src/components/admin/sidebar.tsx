@@ -32,7 +32,7 @@ export function AdminSidebar({ active }: { active?: string }) {
       <div className="mb-8">
         <div className="flex items-center gap-2">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            BeamFlow
+            DueFlow
           </p>
           <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none text-white">
             Admin

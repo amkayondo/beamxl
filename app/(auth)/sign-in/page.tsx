@@ -20,7 +20,7 @@ export default async function SignInPage() {
     <main className="mx-auto flex min-h-screen max-w-md items-center justify-center p-6">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Sign in to BeamFlow</CardTitle>
+          <CardTitle>Sign in to DueFlow</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <form

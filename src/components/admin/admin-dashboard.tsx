@@ -43,7 +43,7 @@ export function AdminDashboard() {
         <div>
           <h2 className="text-xl font-semibold">Dashboard</h2>
           <p className="text-sm text-muted-foreground">
-            System-wide overview of BeamFlow
+            System-wide overview of DueFlow
           </p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -70,7 +70,7 @@ export function AdminDashboard() {
       <div>
         <h2 className="text-xl font-semibold">Dashboard</h2>
         <p className="text-sm text-muted-foreground">
-          System-wide overview of BeamFlow
+          System-wide overview of DueFlow
         </p>
       </div>
 

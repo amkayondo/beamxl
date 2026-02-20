@@ -1,4 +1,10 @@
-import { FLOW_MOCK_EDITOR, FLOW_STORAGE_KEY, FLOW_STORAGE_VERSION, createLocalId } from "@/lib/flows/mock";
+import {
+  FLOW_MOCK_EDITOR,
+  FLOW_STORAGE_KEY,
+  FLOW_STORAGE_VERSION,
+  LEGACY_FLOW_STORAGE_KEY,
+  createLocalId,
+} from "@/lib/flows/mock";
 import { createStarterFlow } from "@/lib/flows/starter-flow";
 import type { FlowRecord, FlowStatus, FlowStorageShape } from "@/lib/flows/types";
 
@@ -36,7 +42,9 @@ function readStorage(): FlowStorageShape {
     return createEmptyStorage();
   }
 
-  const raw = window.localStorage.getItem(FLOW_STORAGE_KEY);
+  const raw =
+    window.localStorage.getItem(FLOW_STORAGE_KEY) ??
+    window.localStorage.getItem(LEGACY_FLOW_STORAGE_KEY);
   if (!raw) {
     return createEmptyStorage();
   }
@@ -62,6 +70,7 @@ function writeStorage(storage: FlowStorageShape) {
   }
 
   window.localStorage.setItem(FLOW_STORAGE_KEY, JSON.stringify(storage));
+  window.localStorage.removeItem(LEGACY_FLOW_STORAGE_KEY);
 }
 
 function ensureOrgContainer(storage: FlowStorageShape, orgSlug: string) {

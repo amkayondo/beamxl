@@ -51,7 +51,7 @@ function wrapInLayout(bodyContent: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BeamFlow</title>
+  <title>DueFlow</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;">
@@ -61,7 +61,7 @@ function wrapInLayout(bodyContent: string): string {
           <!-- Header -->
           <tr>
             <td style="padding:24px 32px;background-color:#1a1a2e;text-align:center;">
-              <span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">BeamFlow</span>
+              <span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">DueFlow</span>
             </td>
           </tr>
           <!-- Body -->

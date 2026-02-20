@@ -2,12 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { env } from "@/env";
 import { createTRPCRouter, adminProcedure, orgProcedure } from "@/server/api/trpc";
 import { orgIntegrations, orgs } from "@/server/db/schema";
 import {
   createPlatformSubscriptionCheckoutSession,
   requireStripeClient,
+  requireStripeSubscriptionPriceId,
 } from "@/server/stripe";
 import { writeAuditLog } from "@/server/services/audit.service";
 
@@ -105,12 +105,19 @@ export const billingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!env.STRIPE_SUBSCRIPTION_PRICE_ID) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "STRIPE_SUBSCRIPTION_PRICE_ID is not configured",
-        });
-      }
+      const priceId = (() => {
+        try {
+          return requireStripeSubscriptionPriceId();
+        } catch (error) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              error instanceof Error
+                ? error.message
+                : "STRIPE_SUBSCRIPTION_PRICE_ID is not configured",
+          });
+        }
+      })();
 
       const org = await ctx.db.query.orgs.findFirst({
         where: (o, { eq }) => eq(o.id, input.orgId),
@@ -144,13 +151,13 @@ export const billingRouter = createTRPCRouter({
         orgId: org.id,
         orgSlug: org.slug,
         customerId,
-        priceId: env.STRIPE_SUBSCRIPTION_PRICE_ID,
+        priceId,
       });
 
       await ctx.db
         .update(orgs)
         .set({
-          stripePriceId: env.STRIPE_SUBSCRIPTION_PRICE_ID,
+          stripePriceId: priceId,
           stripeSubscriptionUpdatedAt: new Date(),
           updatedAt: new Date(),
         })
@@ -166,7 +173,7 @@ export const billingRouter = createTRPCRouter({
         after: {
           checkoutSessionId: session.id,
           customerId,
-          priceId: env.STRIPE_SUBSCRIPTION_PRICE_ID,
+          priceId,
         },
       });
 

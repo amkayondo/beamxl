@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { env } from "@/env";
 import { safeCompare, signPayloadHmacSha256 } from "@/lib/crypto";
 
-export const STRIPE_OAUTH_STATE_COOKIE = "beamflow_stripe_oauth_state";
+export const STRIPE_OAUTH_STATE_COOKIE = "dueflow_stripe_oauth_state";
+export const LEGACY_STRIPE_OAUTH_STATE_COOKIE = "beamflow_stripe_oauth_state";
 const STATE_TTL_SECONDS = 10 * 60;
 
 export type StripeOAuthStatePayload = {
