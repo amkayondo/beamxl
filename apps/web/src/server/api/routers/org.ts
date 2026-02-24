@@ -32,6 +32,8 @@ export const orgRouter = createTRPCRouter({
       status: row.status,
       defaultCurrency: row.org.defaultCurrency,
       timezone: row.org.timezone,
+      createdAt: row.org.createdAt.toISOString(),
+      stripeSubscriptionId: row.org.stripeSubscriptionId,
     }));
   }),
 

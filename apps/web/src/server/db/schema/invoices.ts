@@ -146,6 +146,9 @@ export const invoices = createTable(
     amountDueMinor: d.integer("amount_due_minor").notNull(),
     amountPaidMinor: d.integer("amount_paid_minor").notNull().default(0),
     discountAppliedMinor: d.integer("discount_applied_minor").notNull().default(0),
+    notes: d.text("notes"),
+    tags: d.text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
+    lineItems: d.jsonb("line_items").notNull().default(sql`'[]'::jsonb`),
     currency: d.text("currency").notNull().default("USD"),
     status: invoiceStatusEnum("status").notNull().default("DRAFT"),
     publicPayToken: d

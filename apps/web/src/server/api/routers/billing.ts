@@ -20,6 +20,7 @@ import {
 } from "@/server/stripe";
 import { writeAuditLog } from "@/server/services/audit.service";
 import { settleTopupFromCheckoutSession } from "@/server/services/billing-topup.service";
+import { resolveOrgPlanAllocation } from "@/server/services/plan-allocation.service";
 import { getTopupPack, TOPUP_PACKS } from "@/server/services/topup-packs";
 
 export const billingRouter = createTRPCRouter({
@@ -93,12 +94,37 @@ export const billingRouter = createTRPCRouter({
       const now = new Date();
       const cycleStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
       const cycleEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59));
+      const allocation = await resolveOrgPlanAllocation(input.orgId);
 
       const existing = await ctx.db.query.usageCredits.findFirst({
         where: (u, { and, eq }) => and(eq(u.orgId, input.orgId), eq(u.cycleStart, cycleStart)),
       });
 
       if (existing) {
+        const missingBaseAllocation =
+          existing.smsIncluded === 0 &&
+          existing.emailIncluded === 0 &&
+          existing.voiceSecondsIncluded === 0 &&
+          existing.whatsappIncluded === 0;
+
+        if (missingBaseAllocation) {
+          await ctx.db
+            .update(usageCredits)
+            .set({
+              smsIncluded: allocation.smsIncluded,
+              emailIncluded: allocation.emailIncluded,
+              voiceSecondsIncluded: allocation.voiceSecondsIncluded,
+              whatsappIncluded: allocation.whatsappIncluded,
+              updatedAt: new Date(),
+            })
+            .where(eq(usageCredits.id, existing.id));
+
+          const patched = await ctx.db.query.usageCredits.findFirst({
+            where: (u, { eq }) => eq(u.id, existing.id),
+          });
+          return patched ?? existing;
+        }
+
         return existing;
       }
 
@@ -108,6 +134,10 @@ export const billingRouter = createTRPCRouter({
         orgId: input.orgId,
         cycleStart,
         cycleEnd,
+        smsIncluded: allocation.smsIncluded,
+        emailIncluded: allocation.emailIncluded,
+        voiceSecondsIncluded: allocation.voiceSecondsIncluded,
+        whatsappIncluded: allocation.whatsappIncluded,
       });
 
       const inserted = await ctx.db.query.usageCredits.findFirst({

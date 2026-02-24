@@ -2,9 +2,9 @@ import { and, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import {
-  adminProcedure,
+  automationAdminProcedure,
+  automationProcedure,
   createTRPCRouter,
-  orgProcedure,
 } from "@/server/api/trpc";
 import { flows } from "@/server/db/schema";
 import { writeAuditLog } from "@/server/services/audit.service";
@@ -19,7 +19,7 @@ const listInput = z.object({
 });
 
 export const flowsRouter = createTRPCRouter({
-  list: orgProcedure.input(listInput).query(async ({ ctx, input }) => {
+  list: automationProcedure.input(listInput).query(async ({ ctx, input }) => {
     const offset = (input.page - 1) * input.pageSize;
 
     const whereClause = and(
@@ -48,7 +48,7 @@ export const flowsRouter = createTRPCRouter({
     };
   }),
 
-  byId: orgProcedure
+  byId: automationProcedure
     .input(
       z.object({
         orgId: z.string().min(1),
@@ -68,7 +68,7 @@ export const flowsRouter = createTRPCRouter({
       });
     }),
 
-  create: adminProcedure
+  create: automationAdminProcedure
     .input(
       z.object({
         orgId: z.string().min(1),
@@ -109,7 +109,7 @@ export const flowsRouter = createTRPCRouter({
       return { id: flowId };
     }),
 
-  update: adminProcedure
+  update: automationAdminProcedure
     .input(
       z.object({
         orgId: z.string().min(1),
@@ -156,7 +156,7 @@ export const flowsRouter = createTRPCRouter({
       return { ok: true };
     }),
 
-  delete: adminProcedure
+  delete: automationAdminProcedure
     .input(
       z.object({
         orgId: z.string().min(1),
@@ -186,7 +186,7 @@ export const flowsRouter = createTRPCRouter({
       return { ok: true };
     }),
 
-  duplicate: adminProcedure
+  duplicate: automationAdminProcedure
     .input(
       z.object({
         orgId: z.string().min(1),
@@ -229,7 +229,7 @@ export const flowsRouter = createTRPCRouter({
       return { id: newId };
     }),
 
-  testRun: adminProcedure
+  testRun: automationAdminProcedure
     .input(
       z.object({
         orgId: z.string().min(1),

@@ -7,6 +7,7 @@ import { handleReceiptSendJob } from "@/server/jobs/handlers/receipt-send";
 import { handleReminderSendJob } from "@/server/jobs/handlers/reminder-send";
 import { handleVoiceEscalationJob } from "@/server/jobs/handlers/voice-escalation";
 import { handleFlowExecutionJob } from "@/server/jobs/handlers/flow-execution";
+import { handleTrialDripJob } from "@/server/jobs/handlers/trial-drip";
 
 export function createWorkers() {
   const invoiceGenerationWorker = new Worker(
@@ -45,6 +46,12 @@ export function createWorkers() {
     { connection: redisConnection }
   );
 
+  const trialDripWorker = new Worker(
+    queueNames.trialDrip,
+    async (job) => handleTrialDripJob(job.data),
+    { connection: redisConnection }
+  );
+
   return [
     invoiceGenerationWorker,
     reminderWorker,
@@ -52,5 +59,6 @@ export function createWorkers() {
     receiptWorker,
     voiceWorker,
     flowExecutionWorker,
+    trialDripWorker,
   ];
 }

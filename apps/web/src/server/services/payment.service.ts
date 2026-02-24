@@ -2,7 +2,12 @@ import { and, eq, or } from "drizzle-orm";
 
 import { db } from "@/server/db";
 import { invoices, payments } from "@/server/db/schema";
-import { computeOutstandingMinor, markInvoicePaid } from "@/server/services/invoice.service";
+import {
+  computeOutstandingMinor,
+  markInvoicePaid,
+  refreshBundleTotals,
+} from "@/server/services/invoice.service";
+import { writeAuditLog } from "@/server/services/audit.service";
 import { createConnectedInvoiceCheckoutSession } from "@/server/stripe";
 
 export function resolveCheckoutAmountPolicy(input: {
@@ -234,16 +239,61 @@ export async function recordPaymentFromWebhook(input: {
   };
 
   if (input.status === "SUCCEEDED") {
-    await markInvoicePaid({
-      orgId: input.orgId,
-      invoiceId: input.invoiceId,
-      amountMinor: paymentAmount,
-    });
+    const alreadyAppliedMinor =
+      existingPayment?.status === "SUCCEEDED" ? existingPayment.amountMinor : 0;
+    const deltaToApplyMinor = Math.max(paymentAmount - alreadyAppliedMinor, 0);
+    const isIdempotentReplay = deltaToApplyMinor === 0;
+
+    let reconciliation:
+      | Awaited<ReturnType<typeof markInvoicePaid>>
+      | null = null;
+
+    if (deltaToApplyMinor > 0) {
+      reconciliation = await markInvoicePaid({
+        orgId: input.orgId,
+        invoiceId: input.invoiceId,
+        amountMinor: deltaToApplyMinor,
+      });
+    }
 
     await db
       .update(invoices)
       .set(basePatch)
       .where(and(eq(invoices.id, invoice.id), eq(invoices.orgId, invoice.orgId)));
+
+    if (invoice.bundleId) {
+      await refreshBundleTotals({
+        orgId: invoice.orgId,
+        bundleId: invoice.bundleId,
+      });
+    }
+
+    await writeAuditLog({
+      orgId: input.orgId,
+      actorType: "WEBHOOK",
+      action: "PAYMENT_RECONCILED",
+      entityType: "Invoice",
+      entityId: invoice.id,
+      before: {
+        paymentStatus: existingPayment?.status ?? null,
+        amountPaidMinor: invoice.amountPaidMinor,
+        discountAppliedMinor: invoice.discountAppliedMinor,
+      },
+      after: {
+        provider: input.provider,
+        providerPaymentId: input.providerPaymentId ?? null,
+        providerIntentId: input.providerIntentId ?? null,
+        mappedStatus,
+        paymentAmountMinor: paymentAmount,
+        deltaToApplyMinor,
+        idempotentReplay: isIdempotentReplay,
+        reconciledStatus: reconciliation?.status ?? invoice.status,
+        reconciledAmountPaidMinor:
+          reconciliation?.amountPaidMinor ?? invoice.amountPaidMinor,
+        reconciledDiscountAppliedMinor:
+          reconciliation?.discountAppliedMinor ?? invoice.discountAppliedMinor,
+      },
+    });
     return;
   }
 

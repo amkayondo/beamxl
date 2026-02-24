@@ -1,0 +1,54 @@
+name: PR Spec Reference Guard
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  module-reference:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Validate DueFlow module references in PR body
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const impactsProductCode = files.some((file) => {
+              const path = file.filename;
+              if (path === "DUEFLOW.md") return false;
+              if (path.startsWith(".github/")) return false;
+              if (path.startsWith("README")) return false;
+              return (
+                path.startsWith("apps/") ||
+                path.startsWith("packages/") ||
+                path.startsWith("drizzle/")
+              );
+            });
+
+            if (!impactsProductCode) {
+              core.info("No product-code changes detected; skipping module reference check.");
+              return;
+            }
+
+            const moduleReferencePattern =
+              /(module\\s*\\d+|modules?\\s*[:#]\\s*[\\d,\\-\\s]+|\\[module\\s*\\d+\\])/i;
+            const hasModuleReference = moduleReferencePattern.test(body);
+
+            if (!hasModuleReference) {
+              core.setFailed(
+                "PR body must reference impacted DueFlow modules (example: 'Modules: 1, 3, 11')."
+              );
+            } else {
+              core.info("DueFlow module reference found in PR body.");
+            }

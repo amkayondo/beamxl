@@ -1,16 +1,18 @@
 import { and, eq, isNull } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import {
-  adminProcedure,
+  automationAdminProcedure,
+  automationProcedure,
   createTRPCRouter,
-  orgProcedure,
 } from "@/server/api/trpc";
 import { automationRules } from "@/server/db/schema";
 import { writeAuditLog } from "@/server/services/audit.service";
+import { isPhoneVerifiedForOrg } from "@/server/services/onboarding.service";
 
 export const automationRouter = createTRPCRouter({
-  list: orgProcedure
+  list: automationProcedure
     .input(z.object({ orgId: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
       return ctx.db.query.automationRules.findMany({
@@ -23,7 +25,7 @@ export const automationRouter = createTRPCRouter({
       });
     }),
 
-  upsertRule: adminProcedure
+  upsertRule: automationAdminProcedure
     .input(
       z.object({
         orgId: z.string().min(1),
@@ -37,6 +39,17 @@ export const automationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.channel === "SMS" || input.channel === "VOICE") {
+        const phoneVerified = await isPhoneVerifiedForOrg(ctx.db, input.orgId);
+        if (!phoneVerified) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "Phone verification is required before enabling SMS or voice automation.",
+          });
+        }
+      }
+
       const ruleId = input.ruleId ?? crypto.randomUUID();
 
       if (input.ruleId) {
@@ -83,7 +96,7 @@ export const automationRouter = createTRPCRouter({
       return { ruleId };
     }),
 
-  delete: adminProcedure
+  delete: automationAdminProcedure
     .input(
       z.object({
         orgId: z.string().min(1),

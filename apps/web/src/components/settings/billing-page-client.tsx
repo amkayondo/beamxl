@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ export function BillingPageClient({
   orgSlug: string;
 }) {
   const utils = api.useUtils();
+  const searchParams = useSearchParams();
+  const trialExpired = searchParams.get("trialExpired") === "true";
   const { data, isLoading } = api.billing.getState.useQuery({ orgId });
   const { data: usage } = api.billing.usageMeter.useQuery({ orgId });
   const { data: topupPacks } = api.billing.listTopupPacks.useQuery({ orgId });
@@ -59,6 +62,16 @@ export function BillingPageClient({
 
   return (
     <section className="space-y-6">
+      {/* Trial-expired hard gate banner */}
+      {trialExpired && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4">
+          <p className="font-semibold text-red-900">Your 14-day trial has ended</p>
+          <p className="mt-1 text-sm text-red-700">
+            Your data is safe. Add a payment method below to reactivate your account and keep everything you&apos;ve built.
+          </p>
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-semibold">Billing</h1>
         <p className="text-sm text-muted-foreground">

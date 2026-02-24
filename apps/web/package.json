@@ -6,9 +6,12 @@
   "scripts": {
     "with-env": "dotenv -e ../../.env --",
     "dev": "pnpm run with-env next dev --turbo",
-    "build": "pnpm run with-env next build",
+    "build": "NODE_ENV=production pnpm run with-env next build",
     "start": "pnpm run with-env next start",
     "typecheck": "tsc --noEmit -p ./tsconfig.json",
     "test": "vitest run --root ../.. --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@radix-ui/react-progress": "^1.1.8"
   }
 }

@@ -8,6 +8,7 @@ import {
 } from "@/server/api/trpc";
 import { messageTemplates } from "@/server/db/schema";
 import { writeAuditLog } from "@/server/services/audit.service";
+import { ensureMvpTemplatesForOrg } from "@/server/services/template-catalog.service";
 
 export const templatesRouter = createTRPCRouter({
   list: orgProcedure
@@ -20,6 +21,7 @@ export const templatesRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const offset = (input.page - 1) * input.pageSize;
+      await ensureMvpTemplatesForOrg(input.orgId);
 
       const whereClause = eq(messageTemplates.orgId, input.orgId);
 

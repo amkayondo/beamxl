@@ -15,10 +15,12 @@ import {
   flagInvoiceDispute,
   generateInvoiceForPlan,
   generateInvoiceFromRecurringSchedule,
+  type InvoiceLineItemInput,
   resolveInvoiceDispute,
   updateInvoiceDetails,
   writeOffInvoice,
 } from "@/server/services/invoice.service";
+import { computeInvoiceHealth } from "@/server/services/invoice-health.service";
 import {
   toCanonicalInvoiceStatus,
   toStoredInvoiceStatus,
@@ -49,6 +51,45 @@ function endOfUtcDay(value: string) {
   return new Date(`${value}T23:59:59.999Z`);
 }
 
+const invoiceLineItemSchema = z.object({
+  description: z.string().min(1).max(500),
+  quantity: z.number().positive(),
+  unitAmountMinor: z.number().int().min(0),
+  totalAmountMinor: z.number().int().min(0),
+});
+
+function toLineItems(input: Array<z.infer<typeof invoiceLineItemSchema>> | undefined) {
+  return (input ?? []).map((item) => ({
+    description: item.description.trim(),
+    quantity: item.quantity,
+    unitAmountMinor: item.unitAmountMinor,
+    totalAmountMinor: item.totalAmountMinor,
+  })) satisfies InvoiceLineItemInput[];
+}
+
+function withInvoiceHealth<T extends {
+  amountDueMinor: number;
+  amountPaidMinor: number;
+  discountAppliedMinor: number;
+  dueDate: Date;
+  lastReminderAt: Date | null;
+  status: string;
+}>(invoice: T) {
+  const health = computeInvoiceHealth({
+    amountDueMinor: invoice.amountDueMinor,
+    amountPaidMinor: invoice.amountPaidMinor,
+    discountAppliedMinor: invoice.discountAppliedMinor,
+    dueDate: invoice.dueDate,
+    lastReminderAt: invoice.lastReminderAt,
+    status: invoice.status as (typeof invoices.$inferSelect)["status"],
+  });
+
+  return {
+    ...invoice,
+    health,
+  };
+}
+
 export const invoicesRouter = createTRPCRouter({
   createManual: adminProcedure
     .input(
@@ -64,6 +105,9 @@ export const invoicesRouter = createTRPCRouter({
         amountDueMinor: z.number().int().positive(),
         currency: z.string().length(3).default("USD"),
         status: z.enum(["DRAFT", "SENT"]).default("DRAFT"),
+        notes: z.string().max(10_000).optional().nullable(),
+        tags: z.array(z.string().min(1).max(64)).max(25).optional(),
+        lineItems: z.array(invoiceLineItemSchema).max(200).optional(),
         paymentLinkExpiresAt: z.string().datetime().optional().nullable(),
         earlyDiscountPercent: z.number().int().min(0).max(100).optional(),
         earlyDiscountExpiresAt: z.string().datetime().optional().nullable(),
@@ -84,6 +128,9 @@ export const invoicesRouter = createTRPCRouter({
         amountDueMinor: input.amountDueMinor,
         currency: input.currency.toUpperCase(),
         status: input.status,
+        notes: input.notes ?? null,
+        tags: input.tags?.map((tag) => tag.trim()).filter(Boolean),
+        lineItems: toLineItems(input.lineItems),
         paymentLinkExpiresAt: input.paymentLinkExpiresAt
           ? new Date(input.paymentLinkExpiresAt)
           : null,
@@ -117,6 +164,9 @@ export const invoicesRouter = createTRPCRouter({
         amountDueMinor: z.number().int().positive().optional(),
         periodStart: z.string().date().optional(),
         periodEnd: z.string().date().optional(),
+        notes: z.string().max(10_000).optional().nullable(),
+        tags: z.array(z.string().min(1).max(64)).max(25).optional(),
+        lineItems: z.array(invoiceLineItemSchema).max(200).optional(),
         paymentLinkExpiresAt: z.string().datetime().optional().nullable(),
         earlyDiscountPercent: z.number().int().min(0).max(100).optional(),
         earlyDiscountExpiresAt: z.string().datetime().optional().nullable(),
@@ -132,6 +182,9 @@ export const invoicesRouter = createTRPCRouter({
         amountDueMinor: input.amountDueMinor,
         periodStart: input.periodStart,
         periodEnd: input.periodEnd,
+        notes: input.notes,
+        tags: input.tags?.map((tag) => tag.trim()).filter(Boolean),
+        lineItems: input.lineItems ? toLineItems(input.lineItems) : undefined,
         paymentLinkExpiresAt:
           input.paymentLinkExpiresAt !== undefined
             ? input.paymentLinkExpiresAt
@@ -387,7 +440,7 @@ export const invoicesRouter = createTRPCRouter({
 
       return {
         items: items.map((item) => ({
-          ...item,
+          ...withInvoiceHealth(item),
           status: toCanonicalInvoiceStatus(item.status as InvoiceStatusInput),
         })),
         total: Number(countRows[0]?.count ?? 0),
@@ -443,7 +496,7 @@ export const invoicesRouter = createTRPCRouter({
       if (!invoice) return null;
 
       return {
-        ...invoice,
+        ...withInvoiceHealth(invoice),
         status: toCanonicalInvoiceStatus(invoice.status as InvoiceStatusInput),
       };
     }),

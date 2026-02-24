@@ -10,6 +10,13 @@ import {
   paymentPlans,
 } from "@/server/db/schema";
 
+export type InvoiceLineItemInput = {
+  description: string;
+  quantity: number;
+  unitAmountMinor: number;
+  totalAmountMinor: number;
+};
+
 type InvoiceLike = {
   amountDueMinor: number;
   amountPaidMinor: number;
@@ -112,6 +119,9 @@ export async function createManualInvoice(input: {
   amountDueMinor: number;
   currency?: string;
   status?: "DRAFT" | "SENT";
+  notes?: string | null;
+  tags?: string[];
+  lineItems?: InvoiceLineItemInput[];
   paymentLinkExpiresAt?: Date | null;
   earlyDiscountPercent?: number;
   earlyDiscountExpiresAt?: Date | null;
@@ -134,6 +144,9 @@ export async function createManualInvoice(input: {
     amountDueMinor: input.amountDueMinor,
     amountPaidMinor: 0,
     discountAppliedMinor: 0,
+    notes: input.notes ?? null,
+    tags: input.tags ?? [],
+    lineItems: input.lineItems ?? [],
     currency: input.currency ?? "USD",
     status: input.status ?? "DRAFT",
     publicPayToken: payToken,
@@ -155,6 +168,9 @@ export async function updateInvoiceDetails(input: {
   amountDueMinor?: number;
   periodStart?: string;
   periodEnd?: string;
+  notes?: string | null;
+  tags?: string[];
+  lineItems?: InvoiceLineItemInput[];
   paymentLinkExpiresAt?: Date | null;
   earlyDiscountPercent?: number;
   earlyDiscountExpiresAt?: Date | null;
@@ -168,6 +184,9 @@ export async function updateInvoiceDetails(input: {
       amountDueMinor: input.amountDueMinor,
       periodStart: input.periodStart,
       periodEnd: input.periodEnd,
+      notes: input.notes,
+      tags: input.tags,
+      lineItems: input.lineItems,
       paymentLinkExpiresAt: input.paymentLinkExpiresAt,
       earlyDiscountPercent:
         input.earlyDiscountPercent !== undefined
@@ -446,6 +465,12 @@ export async function markInvoicePaid(input: {
     throw new Error("Invoice not found");
   }
 
+  const previous = {
+    status: invoice.status,
+    amountPaidMinor: invoice.amountPaidMinor,
+    discountAppliedMinor: invoice.discountAppliedMinor,
+  };
+
   const result = resolveInvoicePaymentResult({
     invoice,
     incomingAmountMinor: input.amountMinor,
@@ -467,6 +492,8 @@ export async function markInvoicePaid(input: {
     paidInFull: result.paidInFull,
     amountPaidMinor: result.amountPaidMinor,
     discountAppliedMinor: result.discountAppliedMinor,
+    previous,
+    status: result.status ?? invoice.status,
   };
 }
 

@@ -3,7 +3,7 @@
 This workspace now contains the active Next.js runtime for DueFlow.
 
 Main runtime paths:
-- `apps/web/app`
+- `apps/web/src/app`
 - `apps/web/src`
 
 Run locally:

@@ -4,9 +4,17 @@ import {
   overdueTransitionQueue,
   receiptDispatchQueue,
   reminderDispatchQueue,
+  trialDripQueue,
   voiceEscalationQueue,
 } from "@/server/jobs/queues";
 import type { FlowEventContext } from "@/server/services/flow-executor.service";
+
+type TrialDripPayload = {
+  orgId: string;
+  orgName: string;
+  orgSlug: string;
+  dayNumber: 0 | 3 | 7 | 12 | 14;
+};
 
 const defaultJobOptions = {
   attempts: 5,
@@ -82,4 +90,38 @@ export async function enqueueFlowTriggerJob(payload: {
     jobId: `flow:${payload.orgId}:${payload.eventContext.eventType}:${Date.now()}`,
     ...defaultJobOptions,
   });
+}
+
+/** Schedule all 5 trial drip emails for a newly created org. */
+export async function enqueueTrialDripJobs(payload: {
+  orgId: string;
+  orgName: string;
+  orgSlug: string;
+}): Promise<void> {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+  const schedule: { day: TrialDripPayload["dayNumber"]; delayMs: number }[] = [
+    { day: 0,  delayMs: 0 },
+    { day: 3,  delayMs: 3  * MS_PER_DAY },
+    { day: 7,  delayMs: 7  * MS_PER_DAY },
+    { day: 12, delayMs: 12 * MS_PER_DAY },
+    { day: 14, delayMs: 14 * MS_PER_DAY },
+  ];
+
+  await Promise.all(
+    schedule.map(({ day, delayMs }) =>
+      trialDripQueue.add(
+        "trial-drip",
+        { ...payload, dayNumber: day } satisfies TrialDripPayload,
+        {
+          jobId: `trial:${payload.orgId}:day:${day}`,
+          delay: delayMs,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 30_000 },
+          removeOnComplete: 100,
+          removeOnFail: 200,
+        }
+      )
+    )
+  );
 }

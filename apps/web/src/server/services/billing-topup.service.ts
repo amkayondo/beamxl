@@ -3,6 +3,7 @@ import { and, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/server/db";
 import { creditTopups, usageCredits } from "@/server/db/schema";
 import { createNotification } from "@/server/services/notification.service";
+import { resolveOrgPlanAllocation } from "@/server/services/plan-allocation.service";
 
 function currentCycleBounds(now = new Date()) {
   const cycleStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -19,12 +20,17 @@ async function getOrCreateCurrentUsage(orgId: string, now = new Date()) {
 
   if (existing) return existing;
 
+  const allocation = await resolveOrgPlanAllocation(orgId);
   const id = crypto.randomUUID();
   await db.insert(usageCredits).values({
     id,
     orgId,
     cycleStart,
     cycleEnd,
+    smsIncluded: allocation.smsIncluded,
+    emailIncluded: allocation.emailIncluded,
+    voiceSecondsIncluded: allocation.voiceSecondsIncluded,
+    whatsappIncluded: allocation.whatsappIncluded,
   });
 
   const inserted = await db.query.usageCredits.findFirst({

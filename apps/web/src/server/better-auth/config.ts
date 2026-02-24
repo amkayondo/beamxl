@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { env } from "@/env";
 import { db } from "@/server/db";
 import { orgMembers, orgs } from "@/server/db/schema";
+import { enqueueTrialDripJobs } from "@/server/jobs/producers";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
@@ -48,6 +49,18 @@ async function bootstrapDefaultOrg(userId: string) {
     status: "ACTIVE",
     joinedAt: new Date(),
   });
+
+  // Schedule the 14-day trial drip email sequence (fire-and-forget — never
+  // block signup if Redis is unavailable).
+  try {
+    await enqueueTrialDripJobs({
+      orgId,
+      orgName: "My Organization",
+      orgSlug: slug,
+    });
+  } catch (err) {
+    console.error("[bootstrap] Failed to enqueue trial drip jobs:", err);
+  }
 }
 
 export const auth = betterAuth({

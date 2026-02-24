@@ -5,22 +5,18 @@ import { usePathname } from "next/navigation"
 import {
   BarChart3Icon,
   ClipboardListIcon,
-  FileTextIcon,
-  GitBranchIcon,
   LayoutDashboardIcon,
   MessageSquareIcon,
-  PhoneIcon,
+  SearchIcon,
   Settings2Icon,
-  ShieldIcon,
-  UsersIcon,
   ZapIcon,
-  CreditCardIcon,
-  WorkflowIcon,
+  HelpCircleIcon,
   BuildingIcon,
 } from "lucide-react"
 
+import { NavAgents, SAMPLE_AGENTS } from "@/components/nav-agents"
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
+import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
@@ -46,7 +42,14 @@ export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/")
 
+  // ─── Sticky top nav ────────────────────────────────────────────────────────
   const navMain = [
+    {
+      title: "Search",
+      url: `/${orgSlug}/search`,
+      icon: <SearchIcon />,
+      isFlat: true,
+    },
     {
       title: "Receivables",
       url: `/${orgSlug}/overview`,
@@ -82,8 +85,7 @@ export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
       url: `/${orgSlug}/flows`,
       icon: <ZapIcon />,
       isActive:
-        isActive(`/${orgSlug}/flows`) ||
-        isActive(`/${orgSlug}/automation`),
+        isActive(`/${orgSlug}/flows`) || isActive(`/${orgSlug}/automation`),
       items: [
         { title: "Flows", url: `/${orgSlug}/flows` },
         { title: "Rules", url: `/${orgSlug}/automation` },
@@ -93,9 +95,9 @@ export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
       title: "Settings",
       url: `/${orgSlug}/settings`,
       icon: <Settings2Icon />,
-      isActive:
-        isActive(`/${orgSlug}/settings`),
+      isActive: isActive(`/${orgSlug}/settings`),
       items: [
+        { title: "Onboarding", url: `/${orgSlug}/onboarding` },
         { title: "General", url: `/${orgSlug}/settings` },
         { title: "Billing", url: `/${orgSlug}/settings/billing` },
         { title: "Compliance", url: `/${orgSlug}/settings/compliance` },
@@ -103,16 +105,22 @@ export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
     },
   ]
 
-  const navTools = [
+  // ─── Bottom utility nav ────────────────────────────────────────────────────
+  const navSecondary = [
     {
-      name: "Reports",
+      title: "Reports",
       url: `/${orgSlug}/reports`,
       icon: <BarChart3Icon />,
     },
     {
-      name: "Audit Logs",
+      title: "Audit Logs",
       url: `/${orgSlug}/audit-logs`,
       icon: <ClipboardListIcon />,
+    },
+    {
+      title: "Help",
+      url: "https://docs.dueflow.io",
+      icon: <HelpCircleIcon />,
     },
   ]
 
@@ -125,13 +133,18 @@ export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
+      {/* ── Sticky header: org switcher + nav ──────────────────────────────── */}
       <SidebarHeader>
         <TeamSwitcher teams={teams} currentSlug={orgSlug} />
+        <NavMain items={navMain} className="mt-1" />
       </SidebarHeader>
+
+      {/* ── Scrollable content: agents ────────────────────────────────────── */}
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavProjects projects={navTools} />
+        <NavAgents agents={SAMPLE_AGENTS} orgSlug={orgSlug} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser
           user={{
@@ -145,3 +158,4 @@ export function AppSidebar({ orgSlug, orgs, user, ...props }: AppSidebarProps) {
     </Sidebar>
   )
 }
+

@@ -5,6 +5,7 @@ import { z, ZodError } from "zod";
 import { assertRole, type OrgRole } from "@/lib/rbac";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
+import { isAutomationUnlockedForOrg } from "@/server/services/onboarding.service";
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth.api.getSession({
@@ -122,6 +123,24 @@ export const adminProcedure = orgProcedure.use(({ ctx, next }) => {
 
 export const ownerProcedure = orgProcedure.use(({ ctx, next }) => {
   assertRole(ctx.orgRole, "OWNER");
+  return next();
+});
+
+export const automationProcedure = orgProcedure.use(async ({ ctx, next }) => {
+  const unlocked = await isAutomationUnlockedForOrg(ctx.db, ctx.orgId);
+  if (!unlocked) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Automation access is locked until onboarding step 6 (Mission briefing) is complete.",
+    });
+  }
+
+  return next();
+});
+
+export const automationAdminProcedure = automationProcedure.use(({ ctx, next }) => {
+  assertRole(ctx.orgRole, "ADMIN");
   return next();
 });
 

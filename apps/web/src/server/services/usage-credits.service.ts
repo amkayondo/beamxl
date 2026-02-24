@@ -3,6 +3,7 @@ import { and, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/server/db";
 import { overageCaps, overageEvents, usageCredits } from "@/server/db/schema";
 import { createNotification } from "@/server/services/notification.service";
+import { resolveOrgPlanAllocation } from "@/server/services/plan-allocation.service";
 
 type Channel = "SMS" | "WHATSAPP" | "EMAIL" | "VOICE";
 
@@ -31,12 +32,17 @@ async function getOrCreateCurrentUsageCycle(orgId: string, now = new Date()) {
 
   if (existing) return existing;
 
+  const allocation = await resolveOrgPlanAllocation(orgId);
   const id = crypto.randomUUID();
   await db.insert(usageCredits).values({
     id,
     orgId,
     cycleStart,
     cycleEnd,
+    smsIncluded: allocation.smsIncluded,
+    emailIncluded: allocation.emailIncluded,
+    voiceSecondsIncluded: allocation.voiceSecondsIncluded,
+    whatsappIncluded: allocation.whatsappIncluded,
   });
 
   const inserted = await db.query.usageCredits.findFirst({
@@ -246,6 +252,50 @@ async function maybeNotifyThreshold(input: {
   }
 }
 
+async function maybeNotifyUsageLimit(input: {
+  orgId: string;
+  channel: Channel;
+  included: number;
+  usedBefore: number;
+  usedAfter: number;
+  hardStop: boolean;
+}) {
+  if (input.included <= 0) return;
+
+  const reachedWarning = input.usedBefore < input.included * 0.8 && input.usedAfter >= input.included * 0.8;
+  const reachedLimit = input.usedBefore < input.included && input.usedAfter >= input.included;
+
+  if (reachedWarning) {
+    await createNotification({
+      orgId: input.orgId,
+      type: "AUTOMATION_FAILED",
+      title: `Usage warning: ${input.channel}`,
+      body: `${input.channel} usage reached 80% of your included credits.`,
+      link: "settings/billing",
+      metadata: {
+        channel: input.channel,
+        used: input.usedAfter,
+        included: input.included,
+      },
+    });
+  }
+
+  if (input.hardStop && reachedLimit) {
+    await createNotification({
+      orgId: input.orgId,
+      type: "AUTOMATION_FAILED",
+      title: `Usage hard stop: ${input.channel}`,
+      body: `${input.channel} reached 100% included credits. Sending is blocked until top-up or upgrade.`,
+      link: "settings/billing",
+      metadata: {
+        channel: input.channel,
+        used: input.usedAfter,
+        included: input.included,
+      },
+    });
+  }
+}
+
 export async function enforceAndRecordUsage(input: {
   orgId: string;
   channel: Channel;
@@ -271,6 +321,15 @@ export async function enforceAndRecordUsage(input: {
     orgId: input.orgId,
     cycleStart: row.cycleStart,
     cycleEnd: row.cycleEnd,
+  });
+
+  await maybeNotifyUsageLimit({
+    orgId: input.orgId,
+    channel: input.channel,
+    included: snapshot.included,
+    usedBefore: snapshot.used,
+    usedAfter: projected,
+    hardStop: policy.mode === "HARD_STOP",
   });
 
   if (policy.mode === "HARD_STOP" && incrementalOverageUnits > 0) {

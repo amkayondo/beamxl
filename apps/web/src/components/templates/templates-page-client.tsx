@@ -34,15 +34,15 @@ const SAMPLE_DATA: Record<string, string> = {
 };
 
 function renderPreview(body: string) {
-  return Object.entries(SAMPLE_DATA).reduce(
-    (acc, [k, v]) => acc.replaceAll(k, v),
-    body
-  );
+  return Object.entries(SAMPLE_DATA).reduce((acc, [k, v]) => acc.replaceAll(k, v), body);
 }
+
+type TemplateChannel = "EMAIL" | "SMS" | "WHATSAPP" | "VOICE";
 
 type TemplateFormData = {
   key: string;
   language: "EN" | "RW" | "LG";
+  channel: TemplateChannel;
   body: string;
 };
 
@@ -58,6 +58,7 @@ export function TemplatesPageClient({
   const [form, setForm] = useState<TemplateFormData>({
     key: "",
     language: "EN",
+    channel: "EMAIL",
     body: "",
   });
 
@@ -88,7 +89,7 @@ export function TemplatesPageClient({
   });
 
   function resetForm() {
-    setForm({ key: "", language: "EN", body: "" });
+    setForm({ key: "", language: "EN", channel: "EMAIL", body: "" });
     setEditingId(null);
   }
 
@@ -97,11 +98,18 @@ export function TemplatesPageClient({
     setDialogOpen(true);
   }
 
-  function openEdit(template: { id: string; key: string; language: string; body: string }) {
+  function openEdit(template: {
+    id: string;
+    key: string;
+    language: string;
+    body: string;
+    channel: TemplateChannel | null;
+  }) {
     setEditingId(template.id);
     setForm({
       key: template.key,
       language: template.language as "EN" | "RW" | "LG",
+      channel: template.channel ?? "EMAIL",
       body: template.body,
     });
     setDialogOpen(true);
@@ -109,7 +117,12 @@ export function TemplatesPageClient({
 
   function handleSubmit() {
     if (editingId) {
-      updateMutation.mutate({ orgId, templateId: editingId, body: form.body });
+      updateMutation.mutate({
+        orgId,
+        templateId: editingId,
+        body: form.body,
+        channel: form.channel,
+      });
     } else {
       createMutation.mutate({ orgId, ...form });
     }
@@ -145,6 +158,8 @@ export function TemplatesPageClient({
                   <TableHead>Key</TableHead>
                   <TableHead>Language</TableHead>
                   <TableHead>Version</TableHead>
+                  <TableHead>Channel</TableHead>
+                  <TableHead>Approval</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Body</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -156,6 +171,10 @@ export function TemplatesPageClient({
                     <TableCell className="font-medium">{tpl.key}</TableCell>
                     <TableCell>{tpl.language}</TableCell>
                     <TableCell>v{tpl.version}</TableCell>
+                    <TableCell>{tpl.channel ?? "ANY"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{tpl.approvalStatus}</Badge>
+                    </TableCell>
                     <TableCell>
                       <Badge
                         className={
@@ -175,6 +194,52 @@ export function TemplatesPageClient({
                         <Button size="sm" variant="ghost" onClick={() => openEdit(tpl)}>
                           Edit
                         </Button>
+                        {tpl.approvalStatus === "DRAFT" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              updateMutation.mutate({
+                                orgId,
+                                templateId: tpl.id,
+                                approvalStatus: "PENDING",
+                              })
+                            }
+                          >
+                            Submit
+                          </Button>
+                        ) : null}
+                        {tpl.approvalStatus === "PENDING" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              updateMutation.mutate({
+                                orgId,
+                                templateId: tpl.id,
+                                approvalStatus: "APPROVED",
+                              })
+                            }
+                          >
+                            Approve
+                          </Button>
+                        ) : null}
+                        {tpl.approvalStatus === "PENDING" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              updateMutation.mutate({
+                                orgId,
+                                templateId: tpl.id,
+                                approvalStatus: "REJECTED",
+                                rejectionReason: "Rejected from template console",
+                              })
+                            }
+                          >
+                            Reject
+                          </Button>
+                        ) : null}
                         <Button
                           size="sm"
                           variant="outline"
@@ -210,7 +275,7 @@ export function TemplatesPageClient({
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className="mb-1 block text-sm font-medium">Key</label>
                   <Input
@@ -224,13 +289,30 @@ export function TemplatesPageClient({
                   <label className="mb-1 block text-sm font-medium">Language</label>
                   <select
                     value={form.language}
-                    onChange={(e) => setForm((f) => ({ ...f, language: e.target.value as any }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, language: e.target.value as "EN" | "RW" | "LG" }))
+                    }
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                     disabled={!!editingId}
                   >
                     <option value="EN">English</option>
                     <option value="RW">Kinyarwanda</option>
                     <option value="LG">Luganda</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Channel</label>
+                  <select
+                    value={form.channel}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, channel: e.target.value as TemplateChannel }))
+                    }
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="EMAIL">Email</option>
+                    <option value="SMS">SMS</option>
+                    <option value="WHATSAPP">WhatsApp</option>
+                    <option value="VOICE">Voice</option>
                   </select>
                 </div>
               </div>

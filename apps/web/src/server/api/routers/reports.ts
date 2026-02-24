@@ -1,11 +1,11 @@
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   createTRPCRouter,
   orgProcedure,
 } from "@/server/api/trpc";
-import { invoices } from "@/server/db/schema";
+import { flows, invoices } from "@/server/db/schema";
 import { toStoredInvoiceStatus } from "@/server/services/invoice-status.service";
 
 function startOfUtcDay(value: string) {
@@ -190,6 +190,61 @@ export const reportsRouter = createTRPCRouter({
         due: Number(countRow.due ?? 0),
       };
 
+      const overdueValueResult = await ctx.db.execute(sql`
+        SELECT
+          COALESCE(SUM(amount_due_minor - amount_paid_minor - discount_applied_minor), 0)::bigint AS overdue_value
+        FROM beamflow_invoices
+        WHERE org_id = ${orgId}
+          AND status = 'OVERDUE'
+          AND deleted_at IS NULL
+      `);
+      const overdueValueMinor = Number(
+        (overdueValueResult[0] as Record<string, unknown>)?.overdue_value ?? 0,
+      );
+
+      const activeWorkflowsResult = await ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(flows)
+        .where(and(eq(flows.orgId, orgId), eq(flows.status, "ACTIVE")));
+      const activeWorkflows = Number(activeWorkflowsResult[0]?.count ?? 0);
+
+      const monthCollectedResult = await ctx.db.execute(sql`
+        SELECT COALESCE(SUM(amount_minor), 0)::bigint AS total
+        FROM beamflow_payments
+        WHERE org_id = ${orgId}
+          AND status = 'SUCCEEDED'
+          AND paid_at >= DATE_TRUNC('month', NOW())
+      `);
+      const totalCollectedThisMonth = Number(
+        (monthCollectedResult[0] as Record<string, unknown>)?.total ?? 0,
+      );
+
+      const now = new Date();
+      const cycleStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      const usage = await ctx.db.query.usageCredits.findFirst({
+        where: (u, { and, eq }) => and(eq(u.orgId, orgId), eq(u.cycleStart, cycleStart)),
+      });
+
+      const activeGoal = await ctx.db.query.agentGoals.findFirst({
+        where: (g, { and, eq }) => and(eq(g.orgId, orgId), eq(g.status, "ACTIVE")),
+        orderBy: (g, { desc }) => [desc(g.updatedAt), desc(g.createdAt)],
+      });
+
+      const latestGoalProgress = activeGoal
+        ? await ctx.db.query.agentGoalProgress.findFirst({
+            where: (p, { and, eq }) => and(eq(p.orgId, orgId), eq(p.goalId, activeGoal.id)),
+            orderBy: (p, { desc }) => [desc(p.measuredAt)],
+          })
+        : null;
+
+      const targetMinor = activeGoal?.targetAmountMinor ?? null;
+      const progressMinor =
+        latestGoalProgress?.valueAmountMinor ?? totalCollectedThisMonth;
+      const goalPercent =
+        targetMinor && targetMinor > 0
+          ? Math.min(100, Math.round((progressMinor / targetMinor) * 100))
+          : null;
+
       return {
         dso,
         agingBuckets,
@@ -198,7 +253,33 @@ export const reportsRouter = createTRPCRouter({
         topDelinquent,
         totalOutstanding,
         totalCollected30d,
+        totalCollectedThisMonth,
         invoiceCount,
+        overdueValueMinor,
+        activeWorkflows,
+        usage: usage
+          ? {
+              smsUsed: usage.smsUsed,
+              smsIncluded: usage.smsIncluded,
+              emailUsed: usage.emailUsed,
+              emailIncluded: usage.emailIncluded,
+              voiceSecondsUsed: usage.voiceSecondsUsed,
+              voiceSecondsIncluded: usage.voiceSecondsIncluded,
+              whatsappUsed: usage.whatsappUsed,
+              whatsappIncluded: usage.whatsappIncluded,
+            }
+          : null,
+        goalWidget: activeGoal
+          ? {
+              goalId: activeGoal.id,
+              name: activeGoal.name,
+              targetAmountMinor: targetMinor,
+              progressAmountMinor: progressMinor,
+              goalPercent,
+              status: activeGoal.status,
+              measuredAt: latestGoalProgress?.measuredAt ?? null,
+            }
+          : null,
       };
     }),
 
